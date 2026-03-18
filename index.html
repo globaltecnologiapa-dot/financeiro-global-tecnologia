@@ -1,250 +1,6 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Global Rastreamento</title>
-
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
-<style>
-body {
-  margin:0;
-  font-family: 'Segoe UI', sans-serif;
-  background:#0f172a;
-  color:#fff;
-}
-
-.container { display:flex; }
-
-.sidebar {
-  width:240px;
-  background:#020617;
-  height:100vh;
-  padding:20px;
-  border-right:1px solid #1e293b;
-}
-
-.sidebar h2 { color:#38bdf8; }
-
-.sidebar button {
-  width:100%;
-  padding:12px;
-  margin:6px 0;
-  background:#1e293b;
-  border:none;
-  border-radius:8px;
-  color:#fff;
-  cursor:pointer;
-  transition:0.2s;
-}
-
-.sidebar button:hover { background:#38bdf8; }
-
-.main {
-  flex:1;
-  padding:20px;
-}
-
-.topbar {
-  background:#020617;
-  padding:15px;
-  margin-bottom:15px;
-  border-radius:10px;
-  display:flex;
-  justify-content:space-between;
-}
-
-.card {
-  background:#020617;
-  padding:15px;
-  border-radius:12px;
-  margin-bottom:10px;
-  box-shadow:0 0 10px rgba(0,0,0,0.3);
-}
-
-.grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-  gap:15px;
-}
-
-input, select {
-  width:100%;
-  padding:10px;
-  margin:5px 0;
-  border-radius:8px;
-  border:none;
-  background:#1e293b;
-  color:#fff;
-}
-
-button.action {
-  background:#22c55e;
-  border:none;
-  padding:10px;
-  border-radius:8px;
-  cursor:pointer;
-  width:100%;
-  margin-top:5px;
-}
-
-button.delete {
-  background:#ef4444;
-  margin-top:5px;
-}
-
-a {
-  color:#38bdf8;
-}
-</style>
-</head>
-
-<body>
-
-<div id="loginDiv" style="padding:40px;">
-  <h2>🔐 Login</h2>
-  <input id="email" placeholder="Email">
-  <input id="senha" type="password" placeholder="Senha">
-  <button class="action" onclick="login()">Entrar</button>
-  <button class="action" onclick="registrar()">Criar Conta</button>
-</div>
-
-<div id="app" style="display:none;">
-<div class="container">
-
-<div class="sidebar">
-<h2>Global</h2>
-<button onclick="mostrar('dashboard')">Dashboard</button>
-<button onclick="mostrar('clientes')">Clientes</button>
-<button onclick="mostrar('rastreadores')">Rastreadores</button>
-<button onclick="mostrar('financeiro')">Financeiro</button>
-<button onclick="mostrar('estoque')">Estoque</button>
-<button onclick="mostrar('links')">Links</button>
-<button onclick="logout()">Sair</button>
-</div>
-
-<div class="main">
-
-<div class="topbar">
-<span>🚀 Sistema Global Rastreamento</span>
-<span id="userEmail"></span>
-</div>
-
-<!-- DASHBOARD -->
-<div id="dashboard">
-<h2>Dashboard</h2>
-<div class="grid">
-<div class="card" id="totalClientes"></div>
-<div class="card" id="totalRastreadores"></div>
-<div class="card" id="saldo"></div>
-</div>
-</div>
-
-<!-- CLIENTES -->
-<div id="clientes" style="display:none;">
-
-<h2>Clientes</h2>
-
-<div class="card">
-  <input id="nome" placeholder="Nome">
-  <input id="telefone" placeholder="Telefone">
-  <input id="endereco" placeholder="Endereço">
-  <input id="mensalidade" placeholder="Mensalidade">
-  <input id="qtdVeiculos" placeholder="Quantidade de veículos">
-  <input id="placas" placeholder="Placas (separadas por vírgula)">
-  <input id="contrato" placeholder="Link do contrato">
-
-  <button class="action" onclick="salvarCliente()">Salvar</button>
-</div>
-
-<div id="listaClientes"></div>
-
-</div>
-  
-<!-- RASTREADORES -->
-<div id="rastreadores" style="display:none;">
-<h2>Rastreadores</h2>
-<div class="card">
-<input id="imei" placeholder="IMEI">
-<input id="modelo" placeholder="Modelo">
-<select id="statusR">
-<option>Ativo</option>
-<option>Inativo</option>
-</select>
-<button class="action" onclick="addRastreador()">Salvar</button>
-</div>
-<div id="listaRastreadores"></div>
-</div>
-
-<!-- FINANCEIRO -->
-<div id="financeiro" style="display:none;">
-<h2>Financeiro</h2>
-<div class="card">
-<input id="valor" placeholder="Valor">
-
-<select id="tipo">
-<option>Entrada</option>
-<option>Saída</option>
-</select>
-
-<input id="descricao" placeholder="Descrição">
-
-<input id="data" type="date">
-
-<select id="status">
-<option>Pendente</option>
-<option>Pago</option>
-</select>
-
-<select id="categoria">
-<option>Geral</option>
-<option>Chip</option>
-<option>Servidor</option>
-<option>Imposto</option>
-<option>Internet</option>
-</select>
-
-<select id="fixo">
-<option>Variável</option>
-<option>Fixo</option>
-</select>
-<button class="action" onclick="addFinanceiro()">Salvar</button>
-</div>
-<div id="listaFinanceiro"></div>
-</div>
-
-<!-- ESTOQUE -->
-<div id="estoque" style="display:none;">
-<h2>Estoque</h2>
-<div class="card">
-<input id="produto" placeholder="Produto">
-<input id="quantidade" placeholder="Quantidade">
-<input id="custo" placeholder="Custo">
-<button class="action" onclick="addEstoque()">Salvar</button>
-</div>
-<div id="listaEstoque"></div>
-</div>
-
-<!-- LINKS -->
-<div id="links" style="display:none;">
-<h2>Links</h2>
-<div class="card">
-<input id="nomeLink" placeholder="Nome">
-<input id="urlLink" placeholder="URL">
-<button class="action" onclick="addLink()">Salvar</button>
-</div>
-<div id="listaLinks"></div>
-</div>
-
-</div>
-</div>
-</div>
-
+<!-- COLE AQUI TODO SEU HTML SUBSTITUINDO -->
 <script>
+// ================= FIREBASE =================
 const firebaseConfig = {
 apiKey: "AIzaSyApCbQJCUQSwP0g6vSBqwrIMSK7n-w9ILc",
 authDomain: "global-tecnologia-kanban.firebaseapp.com",
@@ -253,14 +9,14 @@ storageBucket: "global-tecnologia-kanban.firebasestorage.app",
 messagingSenderId: "526527534352",
 appId: "1:526527534352:web:22b874f8029b3cd4c48195"
 };
-  
+
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
 let userId;
 
-// AUTH
+// ================= AUTH =================
 function login(){ auth.signInWithEmailAndPassword(email.value, senha.value); }
 function registrar(){ auth.createUserWithEmailAndPassword(email.value, senha.value); }
 function logout(){ auth.signOut(); }
@@ -278,76 +34,27 @@ app.style.display="none";
 }
 });
 
-// GENERIC DELETE
-function del(col,id){ db.collection(col).doc(id).delete(); }
-
-// CLIENTES
+// ================= CLIENTES =================
 let editId = null;
 
 function salvarCliente(){
-
-  // 🔒 Validação obrigatória
-  if(!nome.value || !telefone.value){
-    alert("Preencha nome e telefone!");
-    return;
-  }
-
   let data = {
     userId,
-    nome: nome.value.trim(),
-    telefone: telefone.value.trim(),
-    endereco: endereco.value.trim(),
-
+    nome: nome.value,
+    telefone: telefone.value,
+    endereco: endereco.value,
     mensalidade: Number(mensalidade.value) || 0,
-    qtdVeiculos: Number(qtdVeiculos.value) || 0,
-
-    placas: placas.value
-      ? placas.value.split(",").map(p => p.trim())
-      : [],
-
-    contrato: contrato.value.trim(),
-
-    // 🔥 preparação para financeiro automático
-    vencimento: 10,
-    ultimoPagamento: null,
-    criadoEm: new Date().toISOString()
+    vencimento: 10
   };
 
-  // 💾 salvar ou editar
-  let ref;
-
   if(editId){
-    ref = db.collection("clientes").doc(editId).update(data);
-    editId = null;
+    db.collection("clientes").doc(editId).update(data);
+    editId=null;
   } else {
-    ref = db.collection("clientes").add(data);
+    db.collection("clientes").add(data);
   }
 
-  // ✅ tratamento de sucesso/erro
-  ref.then(()=>{
-    limparCampos();
-    alert("Cliente salvo com sucesso!");
-  })
-  .catch(err=>{
-    console.error(err);
-    alert("Erro ao salvar cliente!");
-  });
-
-}
-function editarCliente(id){
-  db.collection("clientes").doc(id).get().then(doc=>{
-    let c = doc.data();
-
-    nome.value = c.nome;
-    telefone.value = c.telefone;
-    endereco.value = c.endereco;
-    mensalidade.value = c.mensalidade;
-    qtdVeiculos.value = c.qtdVeiculos;
-    placas.value = c.placas ? c.placas.join(", ") : "";
-    contrato.value = c.contrato;
-
-    editId = id;
-  });
+  limparCampos();
 }
 
 function limparCampos(){
@@ -355,77 +62,102 @@ function limparCampos(){
   telefone.value="";
   endereco.value="";
   mensalidade.value="";
-  qtdVeiculos.value="";
-  placas.value="";
-  contrato.value="";
 }
+
 function carregarClientes(){
   db.collection("clientes").where("userId","==",userId)
   .onSnapshot(snap=>{
-
     listaClientes.innerHTML="";
-    totalClientes.innerHTML = "👥 " + snap.size + " Clientes";
+    totalClientes.innerHTML = "👥 "+snap.size+" Clientes";
 
     snap.forEach(doc=>{
       let c = doc.data();
 
-      listaClientes.innerHTML += `
-        <div class="card">
-          <b>${c.nome}</b><br>
-          📞 ${c.telefone}<br>
-          📍 ${c.endereco || "-"}<br>
-          🚗 ${c.qtdVeiculos || 0} veículos<br>
-          🔢 ${c.placas ? c.placas.join(", ") : "-"}<br>
-          💰 R$ ${c.mensalidade}<br>
-          📄 <a href="${c.contrato}" target="_blank">Contrato</a><br><br>
+      let msg = `Olá ${c.nome}, sua mensalidade de R$ ${c.mensalidade} está disponível para pagamento.`;
 
-          <button onclick="editarCliente('${doc.id}')">Editar</button>
-          <button class="delete" onclick="del('clientes','${doc.id}')">Excluir</button>
-        </div>
-      `;
+      listaClientes.innerHTML += `
+      <div class="card">
+      <b>${c.nome}</b><br>
+      📞 ${c.telefone}<br>
+      💰 R$ ${c.mensalidade}<br><br>
+
+      <a target="_blank" href="https://wa.me/55${c.telefone}?text=${encodeURIComponent(msg)}">
+      <button class="action">Cobrar no WhatsApp</button>
+      </a>
+
+      <button class="delete" onclick="del('clientes','${doc.id}')">Excluir</button>
+      </div>`;
     });
   });
 }
-// RASTREADORES
-function addRastreador(){
-db.collection("rastreadores").add({ userId, imei:imei.value, modelo:modelo.value, status:statusR.value });
+
+// ================= COBRANÇA AUTOMÁTICA =================
+function gerarCobrancas(){
+
+  let hoje = new Date();
+  let dia = hoje.getDate();
+  let mes = hoje.getMonth();
+  let ano = hoje.getFullYear();
+
+  db.collection("clientes").where("userId","==",userId)
+  .get()
+  .then(snap=>{
+
+    snap.forEach(doc=>{
+      let c = doc.data();
+
+      if(dia === c.vencimento){
+
+        let dataHoje = hoje.toISOString().split("T")[0];
+
+        db.collection("financeiro")
+        .where("descricao","==",c.nome)
+        .where("data","==",dataHoje)
+        .get()
+        .then(existe=>{
+
+          if(existe.empty){
+
+            db.collection("financeiro").add({
+              userId,
+              valor: c.mensalidade,
+              tipo: "Entrada",
+              descricao: c.nome,
+              data: dataHoje,
+              status: "Pendente",
+              categoria: "Mensalidade",
+              fixo: "Fixo"
+            });
+
+          }
+
+        });
+
+      }
+
+    });
+
+  });
+
 }
 
-function carregarRastreadores(){
-db.collection("rastreadores").where("userId","==",userId).onSnapshot(snap=>{
-listaRastreadores.innerHTML="";
-totalRastreadores.innerHTML="📡 "+snap.size+" Rastreadores";
-
-snap.forEach(doc=>{
-let r=doc.data();
-listaRastreadores.innerHTML+=`
-<div class="card">
-${r.imei} - ${r.status}
-<button class="delete" onclick="del('rastreadores','${doc.id}')">Excluir</button>
-</div>`;
-});
-});
-}
-
-// FINANCEIRO
+// ================= FINANCEIRO =================
 let editFinanceiroId = null;
 
-function editarFinanceiro(id){
-  db.collection("financeiro").doc(id).get().then(doc=>{
-    let f = doc.data();
+function addFinanceiro(){
 
-    valor.value = f.valor;
-    tipo.value = f.tipo;
-    descricao.value = f.descricao;
-    data.value = f.data;
-    status.value = f.status;
-    categoria.value = f.categoria;
-    fixo.value = f.fixo;
+  let dataObj = {
+    userId,
+    valor: Number(valor.value),
+    tipo: tipo.value,
+    descricao: descricao.value,
+    data: data.value,
+    status: status.value,
+    categoria: categoria.value,
+    fixo: fixo.value
+  };
 
-    editFinanceiroId = id;
-  });
-}
-  {
+  if(editFinanceiroId){
     db.collection("financeiro").doc(editFinanceiroId).update(dataObj);
     editFinanceiroId = null;
   } else {
@@ -434,147 +166,118 @@ function editarFinanceiro(id){
 
   limparFinanceiro();
 }
-  function limparFinanceiro(){
-  valor.value = "";
-  descricao.value = "";
-  data.value = "";
+
+function limparFinanceiro(){
+  valor.value="";
+  descricao.value="";
+  data.value="";
 }
-  
+
+function marcarPago(id){
+  db.collection("financeiro").doc(id).update({ status:"Pago" });
+}
+
+// DESPESAS FIXAS
+function gerarDespesasFixas(){
+
+  let hoje = new Date().toISOString().split("T")[0];
+
+  db.collection("financeiro")
+  .where("userId","==",userId)
+  .where("fixo","==","Fixo")
+  .get()
+  .then(snap=>{
+
+    snap.forEach(doc=>{
+      let f = doc.data();
+
+      db.collection("financeiro")
+      .where("descricao","==",f.descricao)
+      .where("data","==",hoje)
+      .get()
+      .then(existe=>{
+
+        if(existe.empty){
+
+          db.collection("financeiro").add({
+            ...f,
+            data: hoje,
+            status: "Pendente"
+          });
+
+        }
+
+      });
+
+    });
+
+  });
+
+}
+
+// DASHBOARD FINANCEIRO
 function carregarFinanceiro(){
   db.collection("financeiro").where("userId","==",userId)
   .onSnapshot(snap=>{
 
     listaFinanceiro.innerHTML="";
-
     let entrada=0, saida=0;
+
+    let mesAtual = new Date().getMonth();
+    let anoAtual = new Date().getFullYear();
 
     snap.forEach(doc=>{
       let f = doc.data();
+      let dataObj = new Date(f.data);
 
-      listaFinanceiro.innerHTML += `
+      if(dataObj.getMonth()===mesAtual && dataObj.getFullYear()===anoAtual){
+
+        listaFinanceiro.innerHTML += `
         <div class="card">
-          <b>${f.tipo} - R$ ${f.valor}</b><br>
-          📝 ${f.descricao || "-"}<br>
-          📅 ${f.data || "-"}<br>
-          📂 ${f.categoria || "-"}<br>
-          🔁 ${f.fixo || "-"}<br>
-          📌 ${f.status || "-"}<br>
+        ${f.tipo} - R$ ${f.valor}<br>
+        ${f.descricao}<br>
+        ${f.data}<br>
+        ${f.status}<br>
+        <button onclick="marcarPago('${doc.id}')">Pago</button>
+        <button class="delete" onclick="del('financeiro','${doc.id}')">Excluir</button>
+        </div>`;
 
-          <button onclick="editarFinanceiro('${doc.id}')">Editar</button>
-          <button onclick="marcarPago('${doc.id}')">Marcar como Pago</button>
-          <button class="delete" onclick="del('financeiro','${doc.id}')">Excluir</button>
-        </div>
-      `;
+        if(f.tipo==="Entrada" && f.status==="Pago") entrada+=f.valor;
+        if(f.tipo==="Saída" && f.status==="Pago") saida+=f.valor;
 
-      if(f.tipo === "Entrada" && f.status === "Pago"){
-        entrada += f.valor;
       }
 
-      if(f.tipo === "Saída" && f.status === "Pago"){
-        saida += f.valor;
-      }
     });
 
     let saldoFinal = entrada - saida;
 
-    let reinvestimento = saldoFinal * 0.4;
-let retirada = saldoFinal * 0.6;
-
-saldo.innerHTML = `
-  💰 Caixa: R$ ${saldoFinal.toFixed(2)} <br>
-  📈 Entradas: R$ ${entrada.toFixed(2)} <br>
-  📉 Saídas: R$ ${saida.toFixed(2)} <br><br>
-
-  🔁 Reinvestir: R$ ${reinvestimento.toFixed(2)} <br>
-  💵 Pode retirar: R$ ${retirada.toFixed(2)}
-`;
-  });
-} 
-
-  function marcarPago(id){
-  db.collection("financeiro").doc(id).update({
-    status: "Pago"
-  });
-}
-  
-// ESTOQUE
-function addEstoque(){
-  db.collection("estoque").add({
-    userId,
-    produto: produto.value,
-    quantidade: Number(quantidade.value),
-    custo: Number(custo.value)
-  });
-
-  produto.value = "";
-  quantidade.value = "";
-  custo.value = "";
-}
-
-function carregarEstoque(){
-  db.collection("estoque").where("userId","==",userId)
-  .onSnapshot(snap=>{
-
-    listaEstoque.innerHTML="";
-
-    let total = 0;
-
-    snap.forEach(doc=>{
-      let e = doc.data();
-
-      total += (e.quantidade * (e.custo || 0));
-
-      listaEstoque.innerHTML += `
-        <div class="card">
-          ${e.produto} (${e.quantidade})<br>
-          💰 Custo: R$ ${e.custo || 0}
-          <button class="delete" onclick="del('estoque','${doc.id}')">Excluir</button>
-        </div>
-      `;
-    });
-
-    listaEstoque.innerHTML += `
-      <div class="card">
-        💰 Valor total em estoque: R$ ${total.toFixed(2)}
-      </div>
+    saldo.innerHTML = `
+    💰 Lucro: R$ ${saldoFinal.toFixed(2)}<br>
+    📈 Entrada: R$ ${entrada.toFixed(2)}<br>
+    📉 Saída: R$ ${saida.toFixed(2)}<br><br>
+    🔁 Reinvestir: R$ ${(saldoFinal*0.4).toFixed(2)}<br>
+    💵 Retirar: R$ ${(saldoFinal*0.6).toFixed(2)}
     `;
+
   });
 }
-// LINKS
-function addLink(){
-db.collection("links").add({ userId, nome:nomeLink.value, url:urlLink.value });
+
+// ================= DELETE =================
+function del(col,id){
+  db.collection(col).doc(id).delete();
 }
 
-function carregarLinks(){
-db.collection("links").where("userId","==",userId).onSnapshot(snap=>{
-listaLinks.innerHTML="";
-snap.forEach(doc=>{
-let l=doc.data();
-listaLinks.innerHTML+=`
-<div class="card">
-<b>${l.nome}</b><br>
-<a href="${l.url}" target="_blank">Abrir</a>
-<button class="delete" onclick="del('links','${doc.id}')">Excluir</button>
-</div>`;
-});
-});
-}
-
-// LOAD
+// ================= LOAD =================
 function carregarTudo(){
-carregarClientes();
-carregarRastreadores();
-carregarFinanceiro();
-carregarEstoque();
-carregarLinks();
+  carregarClientes();
+  carregarFinanceiro();
+  gerarDespesasFixas();
+  gerarCobrancas(); // 🔥 cobrança automática
 }
 
-// NAV
+// ================= NAV =================
 function mostrar(sec){
 document.querySelectorAll('.main > div').forEach(d=>d.style.display='none');
 document.getElementById(sec).style.display='block';
 }
 </script>
-
-</body>
-</html>
