@@ -116,15 +116,10 @@ button{margin-top:5px;padding:8px;border:none;border-radius:6px;cursor:pointer}
 </div>
 
 <script>
-const firebaseConfig = {
-apiKey: "AIzaSyApCbQJCUQSwP0g6vSBqwrIMSK7n-w9ILc",
-authDomain: "global-tecnologia-kanban.firebaseapp.com",
-projectId: "global-tecnologia-kanban",
-storageBucket: "global-tecnologia-kanban.firebasestorage.app",
-messagingSenderId: "526527534352",
-appId: "1:526527534352:web:22b874f8029b3cd4c48195"
-};
-
+const firebaseConfig={apiKey:"AIzaSyApCbQJCUQSwP0g6vSBqwrIMSK7n-w9ILc",authDomain:"global-tecnologia-kanban.firebaseapp.com",projectId:"global-tecnologia-kanban"};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.firestore()
 let userId;
 let editId=null;
 let editCol=null;
