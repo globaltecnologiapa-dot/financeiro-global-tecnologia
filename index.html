@@ -162,6 +162,218 @@ function mostrar(sec){
   document.querySelectorAll('.main > div').forEach(d => d.style.display='none');
   document.getElementById(sec).style.display='block';
 }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Global Rastreamento - Sistema</title>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <style>
+    body { margin:0; font-family:Arial; background:#0f172a; color:#fff; }
+    .container { display:flex; }
+    .sidebar { width:260px; background:#1e293b; height:100vh; padding:20px; }
+    .sidebar h2 { color:#38bdf8; }
+    .sidebar button { width:100%; margin:4px 0; padding:10px; background:#334155; border:none; color:#fff; cursor:pointer; }
+    .main { flex:1; padding:20px; overflow:auto; height:100vh; }
+    .card { background:#1e293b; padding:15px; border-radius:10px; margin-bottom:10px; }
+    input, select { width:100%; padding:8px; margin:5px 0; }
+    button.action { background:#22c55e; border:none; padding:10px; cursor:pointer; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; }
+  </style>
+</head>
+<body>
+
+<div id="loginDiv">
+  <h2>Login</h2>
+  <input id="email" placeholder="Email">
+  <input id="senha" type="password" placeholder="Senha">
+  <button onclick="login()">Entrar</button>
+  <button onclick="registrar()">Criar Conta</button>
+</div>
+
+<div id="app" style="display:none;">
+  <div class="container">
+    <div class="sidebar">
+      <h2>Global</h2>
+      <button onclick="mostrar('dashboard')">Dashboard</button>
+      <button onclick="mostrar('clientes')">Clientes</button>
+      <button onclick="mostrar('rastreadores')">Rastreadores</button>
+      <button onclick="mostrar('financeiro')">Financeiro</button>
+      <button onclick="mostrar('estoque')">Estoque</button>
+      <button onclick="logout()">Sair</button>
+    </div>
+
+    <div class="main">
+
+      <!-- DASHBOARD -->
+      <div id="dashboard">
+        <h2>Dashboard</h2>
+        <div class="grid">
+          <div class="card" id="totalClientes"></div>
+          <div class="card" id="totalRastreadores"></div>
+          <div class="card" id="saldo"></div>
+        </div>
+      </div>
+
+      <!-- CLIENTES -->
+      <div id="clientes" style="display:none;">
+        <h2>Clientes</h2>
+        <input id="nome" placeholder="Nome">
+        <input id="telefone" placeholder="Telefone">
+        <input id="mensalidade" placeholder="Mensalidade">
+        <button class="action" onclick="addCliente()">Salvar</button>
+        <div id="listaClientes"></div>
+      </div>
+
+      <!-- RASTREADORES -->
+      <div id="rastreadores" style="display:none;">
+        <h2>Rastreadores</h2>
+        <input id="imei" placeholder="IMEI">
+        <input id="modelo" placeholder="Modelo">
+        <select id="statusR">
+          <option>Ativo</option>
+          <option>Inativo</option>
+        </select>
+        <button class="action" onclick="addRastreador()">Salvar</button>
+        <div id="listaRastreadores"></div>
+      </div>
+
+      <!-- FINANCEIRO -->
+      <div id="financeiro" style="display:none;">
+        <h2>Financeiro</h2>
+        <input id="valor" placeholder="Valor">
+        <select id="tipo">
+          <option>Entrada</option>
+          <option>Saída</option>
+        </select>
+        <button class="action" onclick="addFinanceiro()">Salvar</button>
+        <div id="listaFinanceiro"></div>
+      </div>
+
+      <!-- ESTOQUE -->
+      <div id="estoque" style="display:none;">
+        <h2>Estoque</h2>
+        <input id="produto" placeholder="Produto">
+        <input id="quantidade" placeholder="Quantidade">
+        <input id="custo" placeholder="Custo">
+        <button class="action" onclick="addEstoque()">Salvar</button>
+        <div id="listaEstoque"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyApCbQJCUQSwP0g6vSBqwrIMSK7n-w9ILc",
+  authDomain: "global-tecnologia-kanban.firebaseapp.com",
+  projectId: "global-tecnologia-kanban",
+  storageBucket: "global-tecnologia-kanban.firebasestorage.app",
+  messagingSenderId: "526527534352",
+  appId: "1:526527534352:web:22b874f8029b3cd4c48195",
+  measurementId: "G-MX3QFXSL04"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// AUTH
+function login(){ auth.signInWithEmailAndPassword(email.value, senha.value); }
+function registrar(){ auth.createUserWithEmailAndPassword(email.value, senha.value); }
+function logout(){ auth.signOut(); }
+
+let userId = null;
+
+auth.onAuthStateChanged(user => {
+  if(user){
+    userId = user.uid;
+    loginDiv.style.display = "none";
+    app.style.display = "block";
+    carregarTudo();
+  } else {
+    loginDiv.style.display = "block";
+    app.style.display = "none";
+  }
+});
+
+// CLIENTES
+function addCliente(){
+  db.collection("clientes").add({ userId, nome:nome.value, telefone:telefone.value, mensalidade:Number(mensalidade.value) });
+}
+function carregarClientes(){
+  db.collection("clientes").where("userId","==",userId).onSnapshot(snap=>{
+    listaClientes.innerHTML="";
+    totalClientes.innerHTML = "Clientes: " + snap.size;
+    snap.forEach(doc=>{
+      let c=doc.data();
+      listaClientes.innerHTML += `<div class='card'>${c.nome} - R$ ${c.mensalidade}</div>`;
+    });
+  });
+}
+
+// RASTREADORES
+function addRastreador(){
+  db.collection("rastreadores").add({ userId, imei:imei.value, modelo:modelo.value, status:statusR.value });
+}
+function carregarRastreadores(){
+  db.collection("rastreadores").where("userId","==",userId).onSnapshot(snap=>{
+    listaRastreadores.innerHTML="";
+    totalRastreadores.innerHTML = "Rastreadores: " + snap.size;
+    snap.forEach(doc=>{
+      let r=doc.data();
+      listaRastreadores.innerHTML += `<div class='card'>${r.imei} - ${r.status}</div>`;
+    });
+  });
+}
+
+// FINANCEIRO
+function addFinanceiro(){
+  db.collection("financeiro").add({ userId, valor:Number(valor.value), tipo:tipo.value });
+}
+function carregarFinanceiro(){
+  db.collection("financeiro").where("userId","==",userId).onSnapshot(snap=>{
+    listaFinanceiro.innerHTML="";
+    let total=0;
+    snap.forEach(doc=>{
+      let f=doc.data();
+      listaFinanceiro.innerHTML += `<div class='card'>${f.tipo} - R$ ${f.valor}</div>`;
+      total += f.tipo==="Entrada" ? f.valor : -f.valor;
+    });
+    saldo.innerHTML = "Saldo: R$ " + total;
+  });
+}
+
+// ESTOQUE
+function addEstoque(){
+  db.collection("estoque").add({ userId, produto:produto.value, quantidade:Number(quantidade.value), custo:Number(custo.value) });
+}
+function carregarEstoque(){
+  db.collection("estoque").where("userId","==",userId).onSnapshot(snap=>{
+    listaEstoque.innerHTML="";
+    snap.forEach(doc=>{
+      let e=doc.data();
+      listaEstoque.innerHTML += `<div class='card'>${e.produto} - ${e.quantidade} un</div>`;
+    });
+  });
+}
+
+// LOAD ALL
+function carregarTudo(){
+  carregarClientes();
+  carregarRastreadores();
+  carregarFinanceiro();
+  carregarEstoque();
+}
+
+// NAV
+function mostrar(sec){
+  document.querySelectorAll('.main > div').forEach(d=>d.style.display='none');
+  document.getElementById(sec).style.display='block';
+}
 </script>
 
 </body>
