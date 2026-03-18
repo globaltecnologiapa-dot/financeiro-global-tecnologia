@@ -24,7 +24,7 @@ button{margin-top:5px;padding:8px;border:none;border-radius:6px;cursor:pointer}
 .delete{background:#ef4444;color:#fff}
 .edit{background:#22c55e;color:#000}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
-#grafico{max-width:100%;height:300px;margin:20px auto}
+#grafico{width:100%;height:300px;margin:20px 0}
 </style>
 </head>
 <body>
@@ -150,7 +150,7 @@ if(user){userId=user.uid;loginDiv.style.display="none";app.style.display="block"
 else{loginDiv.style.display="block";app.style.display="none";}
 });
 
-// FUNÇÕES GLOBAIS DE SALVAR E EDITAR
+// SALVAR / EDITAR
 function salvar(col,data){
 if(editId && editCol===col){db.collection(col).doc(editId).update(data);editId=null;editCol=null;}
 else{db.collection(col).add(data);}
@@ -202,23 +202,18 @@ if(f.tipo==="Saída"&&f.status==="Pago")saida+=f.valor;
 });
 let saldoFinal=entrada-saida;
 saldo.innerHTML=`💰 ${saldoFinal.toFixed(2)}<br>Entrada: ${entrada}<br>Saída: ${saida}`;
-graficoDashboard(saldoFinal);
+graficoDashboard(saldoFinal,entrada,saida);
 });
 }
 
-// FUNÇÃO GRÁFICO
-function graficoDashboard(saldoFinal){
+function graficoDashboard(saldoFinal,entrada,saida){
 const ctx=document.getElementById('grafico').getContext('2d');
 if(window.grafico)window.grafico.destroy();
 window.grafico=new Chart(ctx,{
 type:'bar',
 data:{
 labels:['Saldo Total','Reinvestimento (40%)','Retirada (60%)'],
-datasets:[{
-label:'R$',
-data:[saldoFinal,saldoFinal*0.4,saldoFinal*0.6],
-backgroundColor:['#22c55e','#3b82f6','#f59e0b']
-}]
+datasets:[{label:'R$',data:[saldoFinal,saldoFinal*0.4,saldoFinal*0.6],backgroundColor:['#22c55e','#3b82f6','#f59e0b']}]
 },
 options:{
 responsive:true,
