@@ -483,11 +483,18 @@ db.collection("estoque").where("userId","==",userId).onSnapshot(snap=>{
 listaEstoque.innerHTML="";
 snap.forEach(doc=>{
 let e=doc.data();
-listaEstoque.innerHTML+=`
-<div class="card">
-${e.produto} (${e.quantidade})
-<button class="delete" onclick="del('estoque','${doc.id}')">Excluir</button>
-</div>`;
+let total = 0;
+
+snap.forEach(doc=>{
+  let e = doc.data();
+  total += (e.quantidade * (e.custo || 0));
+});
+
+listaEstoque.innerHTML += `
+  <div class="card">
+    💰 Valor total em estoque: R$ ${total.toFixed(2)}
+  </div>
+`;
 });
 });
 }
