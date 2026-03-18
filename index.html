@@ -380,17 +380,21 @@ ${r.imei} - ${r.status}
 // FINANCEIRO
 let editFinanceiroId = null;
 
-function addFinanceiro(){
+function editarFinanceiro(id){
+  db.collection("financeiro").doc(id).get().then(doc=>{
+    let f = doc.data();
 
-  let dataObj = {
-    userId,
-    valor: Number(valor.value),
-    tipo: tipo.value,
-    descricao: descricao.value,
-    data: data.value || new Date().toISOString().split("T")[0],    status: status.value,
-    categoria: categoria.value,
-    fixo: fixo.value
-  };
+    valor.value = f.valor;
+    tipo.value = f.tipo;
+    descricao.value = f.descricao;
+    data.value = f.data;
+    status.value = f.status;
+    categoria.value = f.categoria;
+    fixo.value = f.fixo;
+
+    editFinanceiroId = id;
+  });
+}
 
   if(editFinanceiroId){
     db.collection("financeiro").doc(editFinanceiroId).update(dataObj);
@@ -479,26 +483,35 @@ function addEstoque(){
 }
 
 function carregarEstoque(){
-db.collection("estoque").where("userId","==",userId).onSnapshot(snap=>{
-listaEstoque.innerHTML="";
-snap.forEach(doc=>{
-let e=doc.data();
-let total = 0;
+function carregarEstoque(){
+  db.collection("estoque").where("userId","==",userId)
+  .onSnapshot(snap=>{
 
-snap.forEach(doc=>{
-  let e = doc.data();
-  total += (e.quantidade * (e.custo || 0));
-});
+    listaEstoque.innerHTML="";
 
-listaEstoque.innerHTML += `
-  <div class="card">
-    💰 Valor total em estoque: R$ ${total.toFixed(2)}
-  </div>
-`;
-});
-});
+    let total = 0;
+
+    snap.forEach(doc=>{
+      let e = doc.data();
+
+      total += (e.quantidade * (e.custo || 0));
+
+      listaEstoque.innerHTML += `
+        <div class="card">
+          ${e.produto} (${e.quantidade})<br>
+          💰 Custo: R$ ${e.custo || 0}
+          <button class="delete" onclick="del('estoque','${doc.id}')">Excluir</button>
+        </div>
+      `;
+    });
+
+    listaEstoque.innerHTML += `
+      <div class="card">
+        💰 Valor total em estoque: R$ ${total.toFixed(2)}
+      </div>
+    `;
+  });
 }
-
 // LINKS
 function addLink(){
 db.collection("links").add({ userId, nome:nomeLink.value, url:urlLink.value });
