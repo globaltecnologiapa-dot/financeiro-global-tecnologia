@@ -1,151 +1,153 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Global Rastreamento PRO</title>
+<title>Global Rastreamento - Nível Empresa</title>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <style>
-body{font-family:Arial;margin:0;background:#0f172a;color:#fff}
-header{background:#020617;padding:10px;display:flex;justify-content:space-between}
-button{padding:8px;border:none;border-radius:6px;cursor:pointer}
-.action{background:#22c55e;color:#000}
-.delete{background:#ef4444;color:#fff}
-.container{padding:15px}
-.card{background:#1e293b;padding:10px;margin:10px 0;border-radius:10px}
-input,select{width:100%;margin:5px 0;padding:8px;border-radius:6px;border:none}
-.menu{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+body{margin:0;font-family:Arial;background:#0f172a;color:#fff}
+.container{display:flex}
+.sidebar{width:240px;background:#020617;height:100vh;padding:15px}
+.sidebar button{width:100%;margin:5px 0;padding:10px;background:#1e293b;border:none;color:#fff;border-radius:8px;cursor:pointer}
+.sidebar button:hover{background:#22c55e;color:#000}
+.main{flex:1;padding:20px;overflow:auto;height:100vh}
+.card{background:#1e293b;padding:15px;border-radius:10px;margin-bottom:10px}
+input,select{width:100%;padding:8px;margin:5px 0;border-radius:6px;border:none}
+button.action{background:#22c55e;border:none;padding:10px;width:100%;border-radius:8px}
+button.delete{background:#ef4444;color:#fff;border:none;padding:8px;width:100%;margin-top:5px;border-radius:6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
 </style>
 </head>
-
 <body>
 
-<div id="login">
-  <div class="container">
-    <h2>Login</h2>
-    <input id="email" placeholder="Email">
-    <input id="senha" type="password" placeholder="Senha">
-    <button onclick="login()">Entrar</button>
-    <button onclick="registrar()">Criar Conta</button>
-  </div>
+<div id="loginDiv">
+<h2>Login</h2>
+<input id="email" placeholder="Email">
+<input id="senha" type="password" placeholder="Senha">
+<button onclick="login()">Entrar</button>
+<button onclick="registrar()">Criar Conta</button>
 </div>
 
-<div id="app" style="display:none">
-
-<header>
-  <span id="userEmail"></span>
-  <button onclick="logout()">Sair</button>
-</header>
-
+<div id="app" style="display:none;">
 <div class="container">
 
-<div class="menu">
-<button onclick="mostrar('clientes')">Clientes</button>
-<button onclick="mostrar('financeiro')">Financeiro</button>
+<div class="sidebar">
+<h3>Global</h3>
 <button onclick="mostrar('dashboard')">Dashboard</button>
+<button onclick="mostrar('clientes')">Clientes</button>
+<button onclick="mostrar('rastreadores')">Rastreadores</button>
+<button onclick="mostrar('financeiro')">Financeiro</button>
+<button onclick="mostrar('estoque')">Estoque</button>
+<button onclick="mostrar('links')">Links</button>
+<button onclick="mostrar('relatorios')">Relatórios</button>
+<button onclick="logout()">Sair</button>
+</div>
+
+<div class="main">
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+<h2>Dashboard</h2>
+<div class="grid">
+<div class="card" id="totalClientes"></div>
+<div class="card" id="totalRastreadores"></div>
+<div class="card" id="saldo"></div>
+</div>
 </div>
 
 <!-- CLIENTES -->
-<div id="clientes">
-<h3>Clientes</h3>
+<div id="clientes" style="display:none;">
+<h2>Clientes</h2>
 <input id="nome" placeholder="Nome">
 <input id="telefone" placeholder="Telefone">
 <input id="endereco" placeholder="Endereço">
 <input id="mensalidade" placeholder="Mensalidade">
+<input id="qtdVeiculos" placeholder="Qtd Veículos">
+<input id="placas" placeholder="Placas (separadas por vírgula)">
+<input id="contrato" placeholder="Link do contrato">
+<input id="buscaCliente" placeholder="Buscar cliente...">
 <button class="action" onclick="salvarCliente()">Salvar</button>
-<div id="totalClientes"></div>
 <div id="listaClientes"></div>
 </div>
 
+<!-- RASTREADORES -->
+<div id="rastreadores" style="display:none;">
+<h2>Rastreadores</h2>
+<input id="imei" placeholder="IMEI">
+<input id="modelo" placeholder="Modelo">
+<select id="statusR"><option>Ativo</option><option>Inativo</option></select>
+<select id="clienteR"></select>
+<button class="action" onclick="salvarRastreador()">Salvar</button>
+<div id="listaRastreadores"></div>
+</div>
+
 <!-- FINANCEIRO -->
-<div id="financeiro" style="display:none">
-<h3>Financeiro</h3>
+<div id="financeiro" style="display:none;">
+<h2>Financeiro</h2>
 <input id="valor" placeholder="Valor">
-<select id="tipo">
-<option>Entrada</option>
-<option>Saída</option>
-</select>
+<select id="tipo"><option>Entrada</option><option>Saída</option></select>
 <input id="descricao" placeholder="Descrição">
 <input id="data" type="date">
-<select id="status">
-<option>Pendente</option>
-<option>Pago</option>
-</select>
-<button class="action" onclick="addFinanceiro()">Salvar</button>
+<select id="status"><option>Pendente</option><option>Pago</option></select>
+<select id="categoria"><option>Mensalidade</option><option>Internet</option><option>Chip</option><option>Servidor</option><option>Imposto</option></select>
+<select id="fixo"><option>Fixo</option><option>Variável</option></select>
+<button class="action" onclick="salvarFinanceiro()">Salvar</button>
 <div id="listaFinanceiro"></div>
 </div>
 
-<!-- DASHBOARD -->
-<div id="dashboard" style="display:none">
-<h3>Resumo</h3>
-<div id="saldo"></div>
+<!-- ESTOQUE -->
+<div id="estoque" style="display:none;">
+<h2>Estoque</h2>
+<input id="produto" placeholder="Produto">
+<input id="quantidade" placeholder="Quantidade">
+<input id="custo" placeholder="Custo">
+<button class="action" onclick="salvarEstoque()">Salvar</button>
+<div id="listaEstoque"></div>
 </div>
 
+<!-- LINKS -->
+<div id="links" style="display:none;">
+<h2>Links</h2>
+<input id="nomeLink" placeholder="Nome">
+<input id="urlLink" placeholder="URL">
+<button class="action" onclick="salvarLink()">Salvar</button>
+<div id="listaLinks"></div>
+</div>
+
+<!-- RELATORIOS -->
+<div id="relatorios" style="display:none;">
+<h2>Relatórios</h2>
+<div id="relatorioConteudo"></div>
+</div>
+
+</div>
 </div>
 </div>
 
 <script>
-const firebaseConfig = {
-apiKey: "AIzaSyApCbQJCUQSwP0g6vSBqwrIMSK7n-w9ILc",
-authDomain: "global-tecnologia-kanban.firebaseapp.com",
-projectId: "global-tecnologia-kanban",
-storageBucket: "global-tecnologia-kanban.firebasestorage.app",
-messagingSenderId: "526527534352",
-appId: "1:526527534352:web:22b874f8029b3cd4c48195"
-};
-
+const firebaseConfig={apiKey:"AIzaSyApCbQJCUQSwP0g6vSBqwrIMSK7n-w9ILc",authDomain:"global-tecnologia-kanban.firebaseapp.com",projectId:"global-tecnologia-kanban"};
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-let userId, editId=null, editFinanceiroId=null;
-
-const email = document.getElementById("email");
-const senha = document.getElementById("senha");
-const nome = document.getElementById("nome");
-const telefone = document.getElementById("telefone");
-const endereco = document.getElementById("endereco");
-const mensalidade = document.getElementById("mensalidade");
-const listaClientes = document.getElementById("listaClientes");
-const totalClientes = document.getElementById("totalClientes");
-const valor = document.getElementById("valor");
-const tipo = document.getElementById("tipo");
-const descricao = document.getElementById("descricao");
-const data = document.getElementById("data");
-const status = document.getElementById("status");
-const listaFinanceiro = document.getElementById("listaFinanceiro");
-const saldo = document.getElementById("saldo");
-const loginDiv = document.getElementById("login");
-const app = document.getElementById("app");
-const userEmail = document.getElementById("userEmail");
+const auth=firebase.auth();
+const db=firebase.firestore();
+let userId;
 
 function login(){auth.signInWithEmailAndPassword(email.value,senha.value)}
 function registrar(){auth.createUserWithEmailAndPassword(email.value,senha.value)}
 function logout(){auth.signOut()}
 
 auth.onAuthStateChanged(user=>{
-if(user){
-userId=user.uid;
-userEmail.innerText=user.email;
-loginDiv.style.display="none";
-app.style.display="block";
-carregarTudo();
-}else{
-loginDiv.style.display="block";
-app.style.display="none";
-}
+if(user){userId=user.uid;loginDiv.style.display="none";app.style.display="block";carregarTudo();}
+else{loginDiv.style.display="block";app.style.display="none";}
 });
 
 function salvarCliente(){
 if(!userId)return;
-let dataObj={userId,nome:nome.value,telefone:telefone.value,endereco:endereco.value,mensalidade:Number(mensalidade.value)||0};
-if(editId){db.collection("clientes").doc(editId).update(dataObj);editId=null;}else{db.collection("clientes").add(dataObj);} 
-}
+db.collection("clientes").add({userId,nome:nome.value,telefone:telefone.value,endereco:endereco.value,mensalidade:Number(mensalidade.value)||0,qtdVeiculos:Number(qtdVeiculos.value)||0,placas:placas.value.split(",").map(p=>p.trim()),contrato:contrato.value});}
 
 function carregarClientes(){
 db.collection("clientes").where("userId","==",userId).onSnapshot(snap=>{
@@ -154,37 +156,29 @@ totalClientes.innerHTML="👥 "+snap.size;
 snap.forEach(doc=>{
 let c=doc.data();
 let tel=c.telefone.replace(/\D/g,"");
-listaClientes.innerHTML+=`<div class="card"><b>${c.nome}</b><br>${c.telefone}<br>R$ ${c.mensalidade}<br>
-<a target="_blank" href="https://wa.me/55${tel}?text=Cobrança"><button>WhatsApp</button></a>
-<button onclick="del('clientes','${doc.id}')">Excluir</button></div>`;
-});
-});
-}
+listaClientes.innerHTML+=`<div class='card'><b>${c.nome}</b><br>${c.telefone}<br>R$ ${c.mensalidade}<br><a href='${c.contrato}' target='_blank'>Contrato</a><br><a target='_blank' href='https://wa.me/55${tel}?text=Cobrança'><button>WhatsApp</button></a><button class='delete' onclick="del('clientes','${doc.id}')">Excluir</button></div>`;
+});});}
 
-function addFinanceiro(){
-let dataObj={userId,valor:Number(valor.value)||0,tipo:tipo.value,descricao:descricao.value,data:data.value,status:status.value};
-if(editFinanceiroId){db.collection("financeiro").doc(editFinanceiroId).update(dataObj);editFinanceiroId=null;}else{db.collection("financeiro").add(dataObj);} }
+function salvarRastreador(){db.collection("rastreadores").add({userId,imei:imei.value,modelo:modelo.value,status:statusR.value,cliente:clienteR.value});}
+function carregarRastreadores(){db.collection("rastreadores").where("userId","==",userId).onSnapshot(snap=>{let ativos=0;listaRastreadores.innerHTML="";snap.forEach(doc=>{let r=doc.data();if(r.status==="Ativo")ativos++;listaRastreadores.innerHTML+=`<div class='card'>${r.imei}<br>${r.modelo}<br>${r.status}</div>`});totalRastreadores.innerHTML=`📡 ${snap.size} | Ativos: ${ativos}`});}
 
-function carregarFinanceiro(){
-db.collection("financeiro").where("userId","==",userId).onSnapshot(snap=>{
-listaFinanceiro.innerHTML="";
-let entrada=0,saida=0;
-snap.forEach(doc=>{
-let f=doc.data();
-listaFinanceiro.innerHTML+=`<div class="card">${f.tipo} R$ ${f.valor}<br>${f.descricao}<br>${f.status}</div>`;
-if(f.tipo==="Entrada"&&f.status==="Pago")entrada+=f.valor;
-if(f.tipo==="Saída"&&f.status==="Pago")saida+=f.valor;
-});
-let saldoFinal=entrada-saida;
-saldo.innerHTML=`💰 ${saldoFinal.toFixed(2)}<br>📈 ${entrada}<br>📉 ${saida}`;
-});
-}
+function salvarFinanceiro(){db.collection("financeiro").add({userId,valor:Number(valor.value)||0,tipo:tipo.value,descricao:descricao.value,data:data.value,status:status.value,categoria:categoria.value,fixo:fixo.value});}
+function carregarFinanceiro(){db.collection("financeiro").where("userId","==",userId).onSnapshot(snap=>{let entrada=0,saida=0;listaFinanceiro.innerHTML="";snap.forEach(doc=>{let f=doc.data();listaFinanceiro.innerHTML+=`<div class='card'>${f.tipo} R$ ${f.valor}<br>${f.descricao}<br>${f.status}<button onclick="marcarPago('${doc.id}')">Pago</button></div>`;if(f.tipo==="Entrada"&&f.status==="Pago")entrada+=f.valor;if(f.tipo==="Saída"&&f.status==="Pago")saida+=f.valor});let saldoFinal=entrada-saida;saldo.innerHTML=`💰 ${saldoFinal.toFixed(2)}<br>Entrada ${entrada}<br>Saída ${saida}<br>Reinvestir ${(saldoFinal*0.4).toFixed(2)}<br>Retirar ${(saldoFinal*0.6).toFixed(2)}`});}
+function marcarPago(id){db.collection("financeiro").doc(id).update({status:"Pago"});}
 
-function carregarTudo(){carregarClientes();carregarFinanceiro();}
+function salvarEstoque(){db.collection("estoque").add({userId,produto:produto.value,quantidade:Number(quantidade.value),custo:Number(custo.value)});}
+function carregarEstoque(){db.collection("estoque").where("userId","==",userId).onSnapshot(snap=>{listaEstoque.innerHTML="";snap.forEach(doc=>{let e=doc.data();listaEstoque.innerHTML+=`<div class='card'>${e.produto} - ${e.quantidade}</div>`})});}
+
+function salvarLink(){db.collection("links").add({userId,nome:nomeLink.value,url:urlLink.value});}
+function carregarLinks(){db.collection("links").where("userId","==",userId).onSnapshot(snap=>{listaLinks.innerHTML="";snap.forEach(doc=>{let l=doc.data();listaLinks.innerHTML+=`<div class='card'><b>${l.nome}</b><br><a href='${l.url}' target='_blank'>Abrir</a></div>`})});}
+
+function carregarRelatorios(){db.collection("financeiro").where("userId","==",userId).get().then(snap=>{let html="";snap.forEach(doc=>{let f=doc.data();html+=`<div>${f.tipo} - ${f.valor} - ${f.data}</div>`});relatorioConteudo.innerHTML=html;});}
 
 function del(col,id){db.collection(col).doc(id).delete();}
 
-function mostrar(sec){document.querySelectorAll('.container > div').forEach(d=>d.style.display='none');document.getElementById(sec).style.display='block'}
+function carregarTudo(){carregarClientes();carregarRastreadores();carregarFinanceiro();carregarEstoque();carregarLinks();carregarRelatorios();}
+
+function mostrar(sec){document.querySelectorAll('.main > div').forEach(d=>d.style.display='none');document.getElementById(sec).style.display='block'}
 </script>
 
 </body>
