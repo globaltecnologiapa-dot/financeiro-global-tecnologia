@@ -3,13 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Global Rastreamento PRO UX</title>
+<title>Global Rastreamento PRO</title>
 
-<!-- FAVICON (EMBUTIDO - SEM ERRO) -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,
 <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
 <rect width='100' height='100' rx='20' fill='%230f172a'/>
-<text x='50%' y='55%' font-size='50' text-anchor='middle' fill='%23facc15' dy='.3em'>G</text>
+<text x='50%' y='55%' font-size='50' text-anchor='middle' fill='%23facc15'>G</text>
 </svg>">
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -18,26 +17,21 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#0f172a;color:#fff}
-.container{display:flex;min-height:100vh}
-.sidebar{width:260px;background:#111827;padding:20px}
-.sidebar h3{text-align:center}
-.sidebar button{width:100%;margin:6px 0;padding:12px;background:#1f2937;border:none;color:#fff;border-radius:8px;cursor:pointer}
-.sidebar button:hover{background:#22c55e;color:#000}
+body{margin:0;background:#0f172a;color:#fff;font-family:Arial}
+.container{display:flex}
+.sidebar{width:250px;background:#111827;padding:20px}
+.sidebar button{width:100%;margin:5px 0;padding:10px;border:none;background:#1f2937;color:#fff;border-radius:6px}
 .main{flex:1;padding:20px}
-.card{background:#1e293b;padding:15px;border-radius:12px;margin-bottom:10px}
-input,select{width:100%;padding:10px;margin:5px 0;border:none;border-radius:6px;background:#0f172a;color:#fff}
-button{padding:10px;border:none;border-radius:6px;margin-top:5px;cursor:pointer}
+.card{background:#1e293b;padding:10px;margin:10px 0;border-radius:10px}
+input,select{width:100%;padding:8px;margin:5px 0;background:#0f172a;color:#fff;border:none}
+button{cursor:pointer}
+.abrir{background:#3b82f6}
 .delete{background:#ef4444}
-.edit{background:#22c55e;color:#000}
-.abrir{background:#3b82f6;color:#fff}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
 <div id="loginDiv">
 <h2>Login</h2>
 <input id="email" placeholder="Email">
@@ -46,12 +40,10 @@ button{padding:10px;border:none;border-radius:6px;margin-top:5px;cursor:pointer}
 <button onclick="registrar()">Criar Conta</button>
 </div>
 
-<!-- APP -->
 <div id="app" style="display:none;">
 <div class="container">
 
 <div class="sidebar">
-<h3>Global Rastreamento</h3>
 <button onclick="mostrar('dashboard')">Dashboard</button>
 <button onclick="mostrar('clientes')">Clientes</button>
 <button onclick="mostrar('rastreadores')">Rastreadores</button>
@@ -64,30 +56,47 @@ button{padding:10px;border:none;border-radius:6px;margin-top:5px;cursor:pointer}
 
 <div class="main">
 
-<!-- DASHBOARD -->
 <div id="dashboard">
 <h2>Dashboard</h2>
-<div class="grid">
-<div class="card" id="totalClientes"></div>
-<div class="card" id="totalRastreadores"></div>
-<div class="card" id="saldo"></div>
-</div>
+<div id="totalClientes"></div>
+<div id="saldo"></div>
 <canvas id="grafico"></canvas>
 </div>
 
-<!-- CLIENTES -->
 <div id="clientes" style="display:none">
 <h2>Clientes</h2>
 <input id="nome" placeholder="Nome">
 <input id="telefone" placeholder="Telefone">
-<input id="endereco" placeholder="Endereço">
 <input id="mensalidade" placeholder="Mensalidade">
-<input id="placas" placeholder="Placas">
+<input id="vencimento" placeholder="Dia vencimento">
 <button onclick="salvarCliente()">Salvar</button>
 <div id="listaClientes"></div>
 </div>
 
-<!-- LINKS -->
+<div id="rastreadores" style="display:none">
+<h2>Rastreadores</h2>
+<input id="imei" placeholder="IMEI">
+<input id="modelo" placeholder="Modelo">
+<button onclick="salvarRastreador()">Salvar</button>
+<div id="listaRastreadores"></div>
+</div>
+
+<div id="financeiro" style="display:none">
+<h2>Financeiro</h2>
+<input id="valor" placeholder="Valor">
+<select id="tipo"><option>Entrada</option><option>Saída</option></select>
+<button onclick="salvarFinanceiro()">Salvar</button>
+<div id="listaFinanceiro"></div>
+</div>
+
+<div id="estoque" style="display:none">
+<h2>Estoque</h2>
+<input id="produto" placeholder="Produto">
+<input id="quantidade" placeholder="Quantidade">
+<button onclick="salvarEstoque()">Salvar</button>
+<div id="listaEstoque"></div>
+</div>
+
 <div id="links" style="display:none">
 <h2>Links</h2>
 <input id="nomeLink" placeholder="Nome">
@@ -96,19 +105,20 @@ button{padding:10px;border:none;border-radius:6px;margin-top:5px;cursor:pointer}
 <div id="listaLinks"></div>
 </div>
 
+<div id="relatorios" style="display:none">
+<h2>Relatórios</h2>
+<div id="relatorioConteudo"></div>
+</div>
+
 </div>
 </div>
 </div>
 
 <script>
-const firebaseConfig = { 
-  apiKey: "AIzaSyApCbQJCUQSwP0g6vSBqwrIMSK7n-w9ILc",
-  authDomain: "global-tecnologia-kanban.firebaseapp.com",
-  projectId: "global-tecnologia-kanban",
-  storageBucket: "global-tecnologia-kanban.appspot.com",
-  messagingSenderId: "526527534352",
-  appId: "1:526527534352:web:22b874f8029b3cd4c48195",
-  measurementId: "G-MX3QFXSL04"
+const firebaseConfig={
+apiKey:"AIzaSyApCbQJCUQSwP0g6vSBqwrIMSK7n-w9ILc",
+authDomain:"global-tecnologia-kanban.firebaseapp.com",
+projectId:"global-tecnologia-kanban"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -117,20 +127,10 @@ const auth=firebase.auth();
 const db=firebase.firestore();
 let userId;
 
-// LOGIN
-function login(){
-auth.signInWithEmailAndPassword(email.value,senha.value)
-.catch(e=>alert(e.message));
-}
+function login(){auth.signInWithEmailAndPassword(email.value,senha.value)}
+function registrar(){auth.createUserWithEmailAndPassword(email.value,senha.value)}
+function logout(){auth.signOut()}
 
-function registrar(){
-auth.createUserWithEmailAndPassword(email.value,senha.value)
-.catch(e=>alert(e.message));
-}
-
-function logout(){auth.signOut();}
-
-// AUTH
 auth.onAuthStateChanged(user=>{
 if(user){
 userId=user.uid;
@@ -143,109 +143,95 @@ app.style.display="none";
 }
 });
 
-// SALVAR
-function salvar(col,data){
-db.collection(col).add(data).then(carregarTudo);
-}
+function salvar(col,data){db.collection(col).add(data)}
 
-// CLIENTE
 function salvarCliente(){
-salvar("clientes",{userId,nome:nome.value,telefone:telefone.value,endereco:endereco.value,mensalidade:Number(mensalidade.value)||0,placas:placas.value});
+salvar("clientes",{userId,nome:nome.value,telefone:telefone.value,mensalidade:Number(mensalidade.value)||0,vencimento:Number(vencimento.value)||1});
 }
 
-// LINK
+function salvarRastreador(){
+salvar("rastreadores",{userId,imei:imei.value,modelo:modelo.value});
+}
+
+function salvarFinanceiro(){
+salvar("financeiro",{userId,valor:Number(valor.value)||0,tipo:tipo.value});
+}
+
+function salvarEstoque(){
+salvar("estoque",{userId,produto:produto.value,quantidade:Number(quantidade.value)||0});
+}
+
 function salvarLink(){
 salvar("links",{userId,nome:nomeLink.value,url:urlLink.value});
 }
 
-// RENDER (SEM UID)
 function render(col,lista){
 db.collection(col).where("userId","==",userId).onSnapshot(snap=>{
 lista.innerHTML="";
 snap.forEach(doc=>{
 let d=doc.data();
 
-let valores = Object.entries(d)
-.filter(([k])=>k!=="userId")
-.map(([k,v])=>v)
-.join(" | ");
+let valores=Object.entries(d).filter(([k])=>k!="userId").map(([k,v])=>v).join(" | ");
 
-let botoes="";
+let btn="";
+
+if(col==="clientes"){
+let tel=d.telefone.replace(/\D/g,'');
+btn+=`<button class="abrir" onclick="window.open('https://wa.me/55${tel}')">WhatsApp</button>`;
+}
 
 if(col==="links"){
-botoes+=`<button class='abrir' onclick="window.open('${d.url}','_blank')">Abrir</button>`;
+let url=d.url.startsWith('http')?d.url:'https://'+d.url;
+btn+=`<button class="abrir" onclick="window.open('${url}')">Abrir</button>`;
 }
 
 lista.innerHTML+=`
-<div class='card'>
+<div class="card">
 ${valores}<br>
-${botoes}
-<button class='delete' onclick="del('${col}','${doc.id}')">Excluir</button>
+${btn}
+<button class="delete" onclick="del('${col}','${doc.id}')">Excluir</button>
 </div>`;
 });
 });
 }
 
-// DELETE
-function del(col,id){
-db.collection(col).doc(id).delete();
-}
+function del(col,id){db.collection(col).doc(id).delete()}
 
-// DASHBOARD
 function carregarDashboard(){
-let entrada=0,saida=0;
+let total=0;
 
-db.collection("clientes").where("userId","==",userId).get()
-.then(s=>totalClientes.innerHTML="Clientes: "+s.size);
+db.collection("clientes").where("userId","==",userId).get().then(snap=>{
+snap.forEach(doc=>{total+=doc.data().mensalidade});
 
-db.collection("rastreadores").where("userId","==",userId).get()
-.then(s=>totalRastreadores.innerHTML="Rastreadores: "+s.size);
+totalClientes.innerHTML="Clientes: "+snap.size;
+saldo.innerHTML="Receita: R$ "+total.toFixed(2);
 
-db.collection("financeiro").where("userId","==",userId).get()
-.then(snap=>{
-snap.forEach(doc=>{
-let f=doc.data();
-if(f.tipo==="Entrada")entrada+=f.valor;
-if(f.tipo==="Saída")saida+=f.valor;
-});
-
-let saldoFinal=entrada-saida;
-
-saldo.innerHTML=`
-💰 Saldo: ${saldoFinal.toFixed(2)}<br>
-Entrada: ${entrada}<br>
-Saída: ${saida}
-`;
-
-graficoDashboard(saldoFinal,entrada,saida);
+graficoDashboard(total);
 });
 }
 
-// GRÁFICO CORRIGIDO
-function graficoDashboard(saldoFinal,entrada,saida){
+function graficoDashboard(total){
 const ctx=document.getElementById('grafico');
-
 if(window.grafico)window.grafico.destroy();
 
 window.grafico=new Chart(ctx,{
-type:'doughnut',
+type:'bar',
 data:{
-labels:['Entrada','Saída','Lucro'],
-datasets:[{
-data:[entrada,saida,saldoFinal]
-}]
+labels:['Receita'],
+datasets:[{data:[total]}]
 }
 });
 }
 
-// CARREGAR
 function carregarTudo(){
 render("clientes",listaClientes);
+render("rastreadores",listaRastreadores);
+render("financeiro",listaFinanceiro);
+render("estoque",listaEstoque);
 render("links",listaLinks);
 carregarDashboard();
 }
 
-// NAVEGAÇÃO
 function mostrar(id){
 document.querySelectorAll('.main>div').forEach(d=>d.style.display='none');
 document.getElementById(id).style.display='block';
