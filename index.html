@@ -174,7 +174,10 @@ db.collection(col).where("userId","==",userId).onSnapshot(snap=>{
 lista.innerHTML="";
 snap.forEach(doc=>{
 let d=doc.data();
-let valores=Object.entries(d).map(([k,v])=>`${v}`).join(" | ");
+let valores = Object.entries(d)
+  .filter(([k]) => k !== "userId")
+  .map(([k,v]) => `${v}`)
+  .join(" | ");
 lista.innerHTML+=`<div class='card'>${valores}<br>
 <button class='edit' onclick="editar('${col}','${doc.id}')">Editar</button>
 <button class='delete' onclick="del('${col}','${doc.id}')">Excluir</button>
