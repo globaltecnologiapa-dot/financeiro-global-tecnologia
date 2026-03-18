@@ -3,13 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Global Rastreamento PRO</title>
-
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
-<rect width='100' height='100' rx='20' fill='%230f172a'/>
-<text x='50%' y='55%' font-size='50' text-anchor='middle' fill='%23facc15'>G</text>
-</svg>">
+<title>Financeiro PRO</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -20,12 +14,11 @@
 <style>
 body{margin:0;background:#0f172a;color:#fff;font-family:Arial}
 .container{display:flex}
-.sidebar{width:250px;background:#111827;padding:20px}
-.sidebar button{width:100%;margin:5px 0;padding:10px;border:none;background:#1f2937;color:#fff;border-radius:6px}
+.sidebar{width:220px;background:#111827;padding:20px}
+.sidebar button{width:100%;margin:5px 0;padding:10px;background:#1f2937;color:#fff;border:none;border-radius:6px}
 .main{flex:1;padding:20px}
 .card{background:#1e293b;padding:10px;margin:10px 0;border-radius:10px}
 input,select{width:100%;padding:8px;margin:5px 0;background:#0f172a;color:#fff;border:none}
-button{cursor:pointer}
 .abrir{background:#3b82f6}
 .delete{background:#ef4444}
 </style>
@@ -46,10 +39,7 @@ button{cursor:pointer}
 
 <div class="sidebar">
 <button onclick="mostrar('dashboard')">Dashboard</button>
-<button onclick="mostrar('clientes')">Clientes</button>
-<button onclick="mostrar('rastreadores')">Rastreadores</button>
 <button onclick="mostrar('financeiro')">Financeiro</button>
-<button onclick="mostrar('estoque')">Estoque</button>
 <button onclick="mostrar('links')">Links</button>
 <button onclick="mostrar('relatorios')">Relatórios</button>
 <button onclick="logout()">Sair</button>
@@ -62,18 +52,12 @@ button{cursor:pointer}
 <h2>Dashboard</h2>
 
 <select id="mesSelecionado" onchange="carregarDashboard()">
-<option value="0">Janeiro</option>
-<option value="1">Fevereiro</option>
-<option value="2">Março</option>
-<option value="3">Abril</option>
-<option value="4">Maio</option>
-<option value="5">Junho</option>
-<option value="6">Julho</option>
-<option value="7">Agosto</option>
-<option value="8">Setembro</option>
-<option value="9">Outubro</option>
-<option value="10">Novembro</option>
-<option value="11">Dezembro</option>
+<option value="0">Jan</option><option value="1">Fev</option>
+<option value="2">Mar</option><option value="3">Abr</option>
+<option value="4">Mai</option><option value="5">Jun</option>
+<option value="6">Jul</option><option value="7">Ago</option>
+<option value="8">Set</option><option value="9">Out</option>
+<option value="10">Nov</option><option value="11">Dez</option>
 </select>
 
 <div id="saldo"></div>
@@ -82,44 +66,15 @@ button{cursor:pointer}
 <canvas id="grafico"></canvas>
 </div>
 
-<!-- CLIENTES -->
-<div id="clientes" style="display:none">
-<h2>Clientes</h2>
-<input id="nome" placeholder="Nome">
-<input id="telefone" placeholder="Telefone">
-<input id="mensalidade" placeholder="Mensalidade">
-<input id="vencimento" placeholder="Dia vencimento">
-<button onclick="salvarCliente()">Salvar</button>
-<div id="listaClientes"></div>
-</div>
-
-<!-- RASTREADORES -->
-<div id="rastreadores" style="display:none">
-<h2>Rastreadores</h2>
-<input id="imei" placeholder="IMEI">
-<input id="modelo" placeholder="Modelo">
-<button onclick="salvarRastreador()">Salvar</button>
-<div id="listaRastreadores"></div>
-</div>
-
 <!-- FINANCEIRO -->
 <div id="financeiro" style="display:none">
-<h2>Financeiro</h2>
+<h2>Lançamentos</h2>
 <input id="valor" placeholder="Valor">
 <select id="tipo"><option>Entrada</option><option>Saída</option></select>
 <input id="descricao" placeholder="Descrição">
 <select id="status"><option>Pago</option><option>Pendente</option></select>
 <button onclick="salvarFinanceiro()">Salvar</button>
 <div id="listaFinanceiro"></div>
-</div>
-
-<!-- ESTOQUE -->
-<div id="estoque" style="display:none">
-<h2>Estoque</h2>
-<input id="produto" placeholder="Produto">
-<input id="quantidade" placeholder="Quantidade">
-<button onclick="salvarEstoque()">Salvar</button>
-<div id="listaEstoque"></div>
 </div>
 
 <!-- LINKS -->
@@ -143,7 +98,7 @@ button{cursor:pointer}
 
 <script>
 const firebaseConfig={
-apiKey:"AIzaSyApCbQJCUQSwP0g6vSBqwrIMSK7n-w9ILc",
+apiKey:"SUA_API_KEY",
 authDomain:"global-tecnologia-kanban.firebaseapp.com",
 projectId:"global-tecnologia-kanban"
 };
@@ -170,13 +125,15 @@ app.style.display="none";
 }
 });
 
-function salvar(col,data){db.collection(col).add(data)}
+function salvar(col,data){
+db.collection(col).add(data).then(carregarTudo);
+}
 
-// SALVAR FINANCEIRO CORRETO
+// FINANCEIRO
 function salvarFinanceiro(){
 salvar("financeiro",{
 userId,
-valor:Number(valor.value)||0,
+valor:parseFloat(valor.value.replace(",", "."))||0,
 tipo:tipo.value,
 descricao:descricao.value,
 status:status.value,
@@ -184,7 +141,41 @@ data:new Date().toISOString()
 });
 }
 
-// DASHBOARD PROFISSIONAL
+// LINKS
+function salvarLink(){
+salvar("links",{userId,nome:nomeLink.value,url:urlLink.value});
+}
+
+// RENDER
+function render(col,lista){
+db.collection(col).where("userId","==",userId).onSnapshot(snap=>{
+lista.innerHTML="";
+snap.forEach(doc=>{
+let d=doc.data();
+
+let html="";
+
+if(col==="financeiro"){
+html=`💰 ${d.tipo} - R$ ${d.valor}<br>📄 ${d.descricao||""}`;
+}
+
+if(col==="links"){
+let url=d.url.startsWith('http')?d.url:'https://'+d.url;
+html=`🔗 ${d.nome}<br><button class="abrir" onclick="window.open('${url}')">Abrir</button>`;
+}
+
+lista.innerHTML+=`
+<div class="card">
+${html}
+<button class="delete" onclick="del('${col}','${doc.id}')">Excluir</button>
+</div>`;
+});
+});
+}
+
+function del(col,id){db.collection(col).doc(id).delete()}
+
+// DASHBOARD
 function carregarDashboard(){
 
 let entrada=0,saida=0;
@@ -223,14 +214,13 @@ saldo.innerHTML=`
 🔁 Reinvestimento: R$ ${reinvestimento.toFixed(2)}
 `;
 
-graficoComparativo();
+grafico();
 
 });
 }
 
-// GRÁFICO ANUAL
-function graficoComparativo(){
-
+// GRÁFICO
+function grafico(){
 let meses=Array(12).fill(0);
 
 db.collection("financeiro").where("userId","==",userId).get()
@@ -290,38 +280,8 @@ doc.text(`${f.tipo} - R$ ${f.valor} - ${f.descricao||""}`,10,y);
 doc.save("relatorio.pdf");
 }
 
-// LINKS BOTÃO ABRIR
-function render(col,lista){
-db.collection(col).where("userId","==",userId).onSnapshot(snap=>{
-lista.innerHTML="";
-snap.forEach(doc=>{
-let d=doc.data();
-
-let valores=Object.entries(d).filter(([k])=>k!="userId").map(([k,v])=>v).join(" | ");
-
-let btn="";
-if(col==="links"){
-let url=d.url.startsWith('http')?d.url:'https://'+d.url;
-btn+=`<button class="abrir" onclick="window.open('${url}')">Abrir</button>`;
-}
-
-lista.innerHTML+=`
-<div class="card">
-${valores}<br>
-${btn}
-<button class="delete" onclick="del('${col}','${doc.id}')">Excluir</button>
-</div>`;
-});
-});
-}
-
-function del(col,id){db.collection(col).doc(id).delete()}
-
 function carregarTudo(){
-render("clientes",listaClientes);
-render("rastreadores",listaRastreadores);
 render("financeiro",listaFinanceiro);
-render("estoque",listaEstoque);
 render("links",listaLinks);
 carregarDashboard();
 }
