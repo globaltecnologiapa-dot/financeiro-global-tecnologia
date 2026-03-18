@@ -387,8 +387,7 @@ function addFinanceiro(){
     valor: Number(valor.value),
     tipo: tipo.value,
     descricao: descricao.value,
-    data: data.value,
-    status: status.value,
+    data: data.value || new Date().toISOString().split("T")[0],    status: status.value,
     categoria: categoria.value,
     fixo: fixo.value
   };
@@ -467,12 +466,16 @@ saldo.innerHTML = `
   
 // ESTOQUE
 function addEstoque(){
-db.collection("estoque").add({
-  userId,
-  produto: produto.value,
-  quantidade: Number(quantidade.value),
-  custo: Number(custo.value)
-});
+  db.collection("estoque").add({
+    userId,
+    produto: produto.value,
+    quantidade: Number(quantidade.value),
+    custo: Number(custo.value)
+  });
+
+  produto.value = "";
+  quantidade.value = "";
+  custo.value = "";
 }
 
 function carregarEstoque(){
