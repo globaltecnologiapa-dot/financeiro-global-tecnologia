@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Financeiro PRO</title>
+<title>Financeiro Bank PRO</title>
 
-<!-- FAVICON LOCALIZAÇÃO -->
+<!-- FAVICON BANCO -->
 <link rel="icon" href="data:image/svg+xml,
 <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
 <circle cx='50' cy='50' r='40' fill='%23ef4444'/>
@@ -16,31 +16,18 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:linear-gradient(135deg,#0f172a,#020617);color:#fff}
+body{margin:0;font-family:Arial;background:#0f172a;color:#fff}
 .container{display:flex}
 .sidebar{width:230px;background:#111827;padding:20px}
-.sidebar button{width:100%;margin:5px 0;padding:10px;background:#1f2937;color:#fff;border:none;border-radius:6px}
-.sidebar button:hover{background:#22c55e;color:#000}
+.sidebar button{width:100%;margin:5px 0;padding:10px;border:none;background:#1f2937;color:#fff;border-radius:6px}
 .main{flex:1;padding:20px}
-.card{background:#1e293b;padding:10px;margin:10px 0;border-radius:10px;box-shadow:0 0 10px rgba(0,255,150,0.2)}
-input,select{width:100%;padding:8px;margin:5px 0;background:#0f172a;color:#fff;border:none;border-radius:6px}
-button{cursor:pointer}
-.abrir{background:#3b82f6}
-.delete{background:#ef4444}
+.card{background:#1e293b;padding:15px;margin:10px 0;border-radius:12px}
+input,select{width:100%;padding:8px;margin:5px 0;background:#020617;color:#fff;border:none;border-radius:6px}
 
-/* LOGIN CENTRAL */
-#loginDiv{
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-height:100vh;
-}
+#loginDiv{display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column}
 
-/* LIGHT MODE */
 .light{background:#f1f5f9;color:#000}
 .light .card{background:#fff;color:#000}
 .light .sidebar{background:#e2e8f0}
@@ -52,9 +39,8 @@ height:100vh;
 <div id="loginDiv">
 <h2>Login</h2>
 <input id="email" placeholder="Email">
-<input id="senha" type="password" placeholder="Senha">
+<input id="senha" type="password">
 <button onclick="login()">Entrar</button>
-<button onclick="registrar()">Criar Conta</button>
 </div>
 
 <div id="app" style="display:none;">
@@ -63,63 +49,59 @@ height:100vh;
 <div class="sidebar">
 <button onclick="mostrar('dashboard')">Dashboard</button>
 <button onclick="mostrar('financeiro')">Financeiro</button>
-<button onclick="mostrar('links')">Links</button>
-<button onclick="mostrar('relatorios')">Relatórios</button>
-<button onclick="toggleTema()">🌙/☀️</button>
+<button onclick="mostrar('fixos')">Contas Fixas</button>
+<button onclick="toggleTema()">Tema</button>
 <button onclick="logout()">Sair</button>
 </div>
 
 <div class="main">
 
-<!-- DASHBOARD -->
 <div id="dashboard">
 <h2>Dashboard</h2>
-
 <div id="dataHora"></div>
 
-<select id="mesSelecionado" onchange="carregarDashboard()">
-<option value="0">Jan</option><option value="1">Fev</option>
-<option value="2">Mar</option><option value="3">Abr</option>
-<option value="4">Mai</option><option value="5">Jun</option>
-<option value="6">Jul</option><option value="7">Ago</option>
-<option value="8">Set</option><option value="9">Out</option>
-<option value="10">Nov</option><option value="11">Dez</option>
-</select>
+<select id="mesSelecionado" onchange="carregarDashboard()"></select>
 
 <div id="saldo"></div>
-
-<h3>Links Rápidos</h3>
-<div id="linksDashboard"></div>
-
-<button onclick="gerarPDF()">📄 Gerar PDF</button>
 
 <canvas id="grafico"></canvas>
 </div>
 
-<!-- FINANCEIRO -->
 <div id="financeiro" style="display:none">
 <h2>Lançamentos</h2>
+
 <input id="valor" placeholder="Valor">
-<select id="tipo"><option>Entrada</option><option>Saída</option></select>
+<select id="tipo">
+<option>Entrada</option>
+<option>Saída</option>
+</select>
+
+<select id="origem">
+<option value="salario">Salário</option>
+<option value="reinvestimento">Reinvestimento</option>
+</select>
+
 <input id="descricao" placeholder="Descrição">
-<select id="status"><option>Pago</option><option>Pendente</option></select>
+
+<select id="status">
+<option>Pago</option>
+<option>Pendente</option>
+</select>
+
 <button onclick="salvarFinanceiro()">Salvar</button>
+
 <div id="listaFinanceiro"></div>
 </div>
 
-<!-- LINKS -->
-<div id="links" style="display:none">
-<h2>Links</h2>
-<input id="nomeLink" placeholder="Nome">
-<input id="urlLink" placeholder="URL">
-<button onclick="salvarLink()">Salvar</button>
-<div id="listaLinks"></div>
-</div>
+<div id="fixos" style="display:none">
+<h2>Contas Fixas</h2>
 
-<!-- RELATÓRIOS -->
-<div id="relatorios" style="display:none">
-<h2>Relatórios</h2>
-<div id="relatorioConteudo"></div>
+<input id="nomeFixo" placeholder="Nome">
+<input id="valorFixo" placeholder="Valor">
+<input id="diaFixo" placeholder="Dia (1-31)">
+<button onclick="salvarFixo()">Salvar</button>
+
+<div id="listaFixos"></div>
 </div>
 
 </div>
@@ -138,205 +120,106 @@ const auth=firebase.auth();
 const db=firebase.firestore();
 let userId;
 
-// LOGIN
 function login(){auth.signInWithEmailAndPassword(email.value,senha.value)}
-function registrar(){auth.createUserWithEmailAndPassword(email.value,senha.value)}
 function logout(){auth.signOut()}
 
-// AUTH
 auth.onAuthStateChanged(user=>{
 if(user){
 userId=user.uid;
 loginDiv.style.display="none";
 app.style.display="block";
-carregarTudo();
+init();
 }else{
 loginDiv.style.display="block";
 app.style.display="none";
 }
 });
 
-// SALVAR
-function salvar(col,data){
-db.collection(col).add(data)
-.then(()=>carregarTudo())
-.catch(e=>alert("Erro: "+e.message));
-}
-
-// FINANCEIRO
 function salvarFinanceiro(){
-
-const valorInput = document.getElementById("valor");
-const tipoInput = document.getElementById("tipo");
-const descricaoInput = document.getElementById("descricao");
-const statusInput = document.getElementById("status");
-
 db.collection("financeiro").add({
 userId,
-valor: parseFloat(valorInput.value.replace(",", ".")) || 0,
-tipo: tipoInput.value,
-descricao: descricaoInput.value,
-status: statusInput.value,
-data: new Date().toISOString()
-})
-.then(()=>{
-alert("Salvo com sucesso ✅");
-carregarTudo();
-})
-.catch(e=>{
-alert("Erro ao salvar: " + e.message);
-});
-
-}
-// LINKS
-function salvarLink(){
-salvar("links",{userId,nome:nomeLink.value,url:urlLink.value});
+valor:parseFloat(valor.value)||0,
+tipo:tipo.value,
+origem:origem.value,
+descricao:descricao.value,
+status:status.value,
+data:new Date().toISOString()
+}).then(init);
 }
 
-// RENDER
-function render(col,lista){
-db.collection(col).where("userId","==",userId).onSnapshot(snap=>{
-lista.innerHTML="";
-snap.forEach(doc=>{
-let d=doc.data();
-
-let html="";
-
-if(col==="financeiro"){
-html=`💰 ${d.tipo} - R$ ${d.valor}<br>📄 ${d.descricao||""}`;
+function salvarFixo(){
+db.collection("fixos").add({
+userId,
+nome:nomeFixo.value,
+valor:parseFloat(valorFixo.value)||0,
+dia:Number(diaFixo.value)
+}).then(init);
 }
-
-if(col==="links"){
-let url=d.url.startsWith('http')?d.url:'https://'+d.url;
-html=`🔗 ${d.nome}<br><button class="abrir" onclick="window.open('${url}')">Abrir</button>`;
-}
-
-lista.innerHTML+=`
-<div class="card">
-${html}
-<button class="delete" onclick="del('${col}','${doc.id}')">Excluir</button>
-</div>`;
-});
-});
-}
-
-function del(col,id){db.collection(col).doc(id).delete()}
 
 // DASHBOARD
 function carregarDashboard(){
 
-let entrada=0,saida=0;
-let mes=Number(mesSelecionado.value);
-let ano=new Date().getFullYear();
+let entrada=0,saidaSalario=0,saidaReinvestimento=0;
 
 db.collection("financeiro").where("userId","==",userId).get()
 .then(snap=>{
 
 snap.forEach(doc=>{
 let f=doc.data();
-if(!f.data) return;
+if(f.status!="Pago") return;
 
-let d=new Date(f.data);
+if(f.tipo=="Entrada") entrada+=f.valor;
 
-if(d.getMonth()==mes && d.getFullYear()==ano){
-
-if(f.status==="Pago"){
-if(f.tipo==="Entrada")entrada+=f.valor;
-if(f.tipo==="Saída")saida+=f.valor;
+if(f.tipo=="Saída"){
+if(f.origem=="salario") saidaSalario+=f.valor;
+if(f.origem=="reinvestimento") saidaReinvestimento+=f.valor;
 }
-
-}
-
 });
 
-let saldoFinal=entrada-saida;
-let salario=saldoFinal*0.6;
-let reinvestimento=saldoFinal*0.4;
+let salario=(entrada*0.6)-saidaSalario;
+let reinvestimento=(entrada*0.4)-saidaReinvestimento;
 
 saldo.innerHTML=`
-💰 Entrada: R$ ${entrada.toFixed(2)}<br>
-💸 Saída: R$ ${saida.toFixed(2)}<br>
-📊 Saldo: R$ ${saldoFinal.toFixed(2)}<br><br>
-💼 Salário: R$ ${salario.toFixed(2)}<br>
-🔁 Reinvestimento: R$ ${reinvestimento.toFixed(2)}
+💼 Salário: ${salario.toFixed(2)}<br>
+🔁 Investimento: ${reinvestimento.toFixed(2)}
 `;
 
-grafico();
+grafico(entrada,salario,reinvestimento);
+
 });
 }
 
 // GRÁFICO
-function grafico(){
-let meses=Array(12).fill(0);
-
-db.collection("financeiro").where("userId","==",userId).get()
-.then(snap=>{
-snap.forEach(doc=>{
-let f=doc.data();
-if(!f.data) return;
-
-let d=new Date(f.data);
-
-if(f.tipo==="Entrada" && f.status==="Pago"){
-meses[d.getMonth()]+=f.valor;
-}
-});
-
-const ctx=document.getElementById('grafico');
+function grafico(e,s,r){
 if(window.grafico)window.grafico.destroy();
-
-window.grafico=new Chart(ctx,{
-type:'line',
-data:{
-labels:['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],
-datasets:[{label:'Receita',data:meses}]
-}
-});
+window.grafico=new Chart(grafico,{
+type:'bar',
+data:{labels:['Entrada','Salário','Investimento'],datasets:[{data:[e,s,r]}]}
 });
 }
 
-// DATA HORA
-setInterval(()=>{
-let agora=new Date();
-dataHora.innerHTML=agora.toLocaleString('pt-BR');
-},1000);
+// DATA
+setInterval(()=>dataHora.innerHTML=new Date().toLocaleString("pt-BR"),1000);
 
 // TEMA
-function toggleTema(){document.body.classList.toggle("light")}
-
-// LINKS DASHBOARD
-function carregarLinksDashboard(){
-db.collection("links").where("userId","==",userId)
-.onSnapshot(snap=>{
-linksDashboard.innerHTML="";
-snap.forEach(doc=>{
-let d=doc.data();
-let url=d.url.startsWith('http')?d.url:'https://'+d.url;
-
-linksDashboard.innerHTML+=`
-<button class="abrir" onclick="window.open('${url}')">${d.nome}</button>
-`;
-});
-});
+function toggleTema(){
+document.body.classList.toggle("light");
+localStorage.setItem("tema",document.body.classList.contains("light"));
 }
 
-// PDF
-async function gerarPDF(){
-const { jsPDF } = window.jspdf;
-const doc = new jsPDF();
-
-doc.text("Relatório Financeiro",10,10);
-doc.save("relatorio.pdf");
+window.onload=()=>{
+if(localStorage.getItem("tema")=="true"){
+document.body.classList.add("light");
+}
 }
 
 // INIT
-function carregarTudo(){
-let hoje=new Date();
-mesSelecionado.value=hoje.getMonth();
-
-render("financeiro",listaFinanceiro);
-render("links",listaLinks);
-carregarLinksDashboard();
+function init(){
+mesSelecionado.innerHTML="";
+for(let i=0;i<12;i++){
+mesSelecionado.innerHTML+=`<option value="${i}">${i+1}</option>`;
+}
+mesSelecionado.value=new Date().getMonth();
 carregarDashboard();
 }
 
