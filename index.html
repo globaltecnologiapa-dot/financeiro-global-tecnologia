@@ -15,6 +15,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 body{margin:0;background:#0f172a;color:#fff;font-family:Arial}
@@ -56,13 +57,32 @@ button{cursor:pointer}
 
 <div class="main">
 
+<!-- DASHBOARD -->
 <div id="dashboard">
 <h2>Dashboard</h2>
-<div id="totalClientes"></div>
+
+<select id="mesSelecionado" onchange="carregarDashboard()">
+<option value="0">Janeiro</option>
+<option value="1">Fevereiro</option>
+<option value="2">Março</option>
+<option value="3">Abril</option>
+<option value="4">Maio</option>
+<option value="5">Junho</option>
+<option value="6">Julho</option>
+<option value="7">Agosto</option>
+<option value="8">Setembro</option>
+<option value="9">Outubro</option>
+<option value="10">Novembro</option>
+<option value="11">Dezembro</option>
+</select>
+
 <div id="saldo"></div>
+<button onclick="gerarPDF()">📄 Gerar PDF</button>
+
 <canvas id="grafico"></canvas>
 </div>
 
+<!-- CLIENTES -->
 <div id="clientes" style="display:none">
 <h2>Clientes</h2>
 <input id="nome" placeholder="Nome">
@@ -73,6 +93,7 @@ button{cursor:pointer}
 <div id="listaClientes"></div>
 </div>
 
+<!-- RASTREADORES -->
 <div id="rastreadores" style="display:none">
 <h2>Rastreadores</h2>
 <input id="imei" placeholder="IMEI">
@@ -81,14 +102,18 @@ button{cursor:pointer}
 <div id="listaRastreadores"></div>
 </div>
 
+<!-- FINANCEIRO -->
 <div id="financeiro" style="display:none">
 <h2>Financeiro</h2>
 <input id="valor" placeholder="Valor">
 <select id="tipo"><option>Entrada</option><option>Saída</option></select>
+<input id="descricao" placeholder="Descrição">
+<select id="status"><option>Pago</option><option>Pendente</option></select>
 <button onclick="salvarFinanceiro()">Salvar</button>
 <div id="listaFinanceiro"></div>
 </div>
 
+<!-- ESTOQUE -->
 <div id="estoque" style="display:none">
 <h2>Estoque</h2>
 <input id="produto" placeholder="Produto">
@@ -97,6 +122,7 @@ button{cursor:pointer}
 <div id="listaEstoque"></div>
 </div>
 
+<!-- LINKS -->
 <div id="links" style="display:none">
 <h2>Links</h2>
 <input id="nomeLink" placeholder="Nome">
@@ -105,6 +131,7 @@ button{cursor:pointer}
 <div id="listaLinks"></div>
 </div>
 
+<!-- RELATÓRIOS -->
 <div id="relatorios" style="display:none">
 <h2>Relatórios</h2>
 <div id="relatorioConteudo"></div>
@@ -145,26 +172,125 @@ app.style.display="none";
 
 function salvar(col,data){db.collection(col).add(data)}
 
-function salvarCliente(){
-salvar("clientes",{userId,nome:nome.value,telefone:telefone.value,mensalidade:Number(mensalidade.value)||0,vencimento:Number(vencimento.value)||1});
-}
-
-function salvarRastreador(){
-salvar("rastreadores",{userId,imei:imei.value,modelo:modelo.value});
-}
-
+// SALVAR FINANCEIRO CORRETO
 function salvarFinanceiro(){
-salvar("financeiro",{userId,valor:Number(valor.value)||0,tipo:tipo.value});
+salvar("financeiro",{
+userId,
+valor:Number(valor.value)||0,
+tipo:tipo.value,
+descricao:descricao.value,
+status:status.value,
+data:new Date().toISOString()
+});
 }
 
-function salvarEstoque(){
-salvar("estoque",{userId,produto:produto.value,quantidade:Number(quantidade.value)||0});
+// DASHBOARD PROFISSIONAL
+function carregarDashboard(){
+
+let entrada=0,saida=0;
+let mes=Number(mesSelecionado.value);
+let ano=new Date().getFullYear();
+
+db.collection("financeiro").where("userId","==",userId).get()
+.then(snap=>{
+
+snap.forEach(doc=>{
+let f=doc.data();
+if(!f.data) return;
+
+let d=new Date(f.data);
+
+if(d.getMonth()==mes && d.getFullYear()==ano){
+
+if(f.status==="Pago"){
+if(f.tipo==="Entrada")entrada+=f.valor;
+if(f.tipo==="Saída")saida+=f.valor;
 }
 
-function salvarLink(){
-salvar("links",{userId,nome:nomeLink.value,url:urlLink.value});
 }
 
+});
+
+let saldoFinal=entrada-saida;
+let salario=saldoFinal*0.6;
+let reinvestimento=saldoFinal*0.4;
+
+saldo.innerHTML=`
+💰 Entrada: R$ ${entrada.toFixed(2)}<br>
+💸 Saída: R$ ${saida.toFixed(2)}<br>
+📊 Saldo: R$ ${saldoFinal.toFixed(2)}<br><br>
+💼 Salário: R$ ${salario.toFixed(2)}<br>
+🔁 Reinvestimento: R$ ${reinvestimento.toFixed(2)}
+`;
+
+graficoComparativo();
+
+});
+}
+
+// GRÁFICO ANUAL
+function graficoComparativo(){
+
+let meses=Array(12).fill(0);
+
+db.collection("financeiro").where("userId","==",userId).get()
+.then(snap=>{
+
+snap.forEach(doc=>{
+let f=doc.data();
+if(!f.data) return;
+
+let d=new Date(f.data);
+
+if(f.tipo==="Entrada" && f.status==="Pago"){
+meses[d.getMonth()]+=f.valor;
+}
+});
+
+const ctx=document.getElementById('grafico');
+if(window.grafico)window.grafico.destroy();
+
+window.grafico=new Chart(ctx,{
+type:'line',
+data:{
+labels:['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],
+datasets:[{label:'Receita',data:meses}]
+}
+});
+
+});
+}
+
+// PDF
+async function gerarPDF(){
+const { jsPDF } = window.jspdf;
+const doc = new jsPDF();
+
+let y=10;
+doc.text("Relatório Financeiro",10,y);
+
+let mes=Number(mesSelecionado.value);
+let ano=new Date().getFullYear();
+
+await db.collection("financeiro").where("userId","==",userId).get()
+.then(snap=>{
+snap.forEach(d=>{
+let f=d.data();
+if(!f.data) return;
+
+let data=new Date(f.data);
+
+if(data.getMonth()==mes && data.getFullYear()==ano){
+y+=10;
+doc.text(`${f.tipo} - R$ ${f.valor} - ${f.descricao||""}`,10,y);
+}
+});
+});
+
+doc.save("relatorio.pdf");
+}
+
+// LINKS BOTÃO ABRIR
 function render(col,lista){
 db.collection(col).where("userId","==",userId).onSnapshot(snap=>{
 lista.innerHTML="";
@@ -174,12 +300,6 @@ let d=doc.data();
 let valores=Object.entries(d).filter(([k])=>k!="userId").map(([k,v])=>v).join(" | ");
 
 let btn="";
-
-if(col==="clientes"){
-let tel=d.telefone.replace(/\D/g,'');
-btn+=`<button class="abrir" onclick="window.open('https://wa.me/55${tel}')">WhatsApp</button>`;
-}
-
 if(col==="links"){
 let url=d.url.startsWith('http')?d.url:'https://'+d.url;
 btn+=`<button class="abrir" onclick="window.open('${url}')">Abrir</button>`;
@@ -196,32 +316,6 @@ ${btn}
 }
 
 function del(col,id){db.collection(col).doc(id).delete()}
-
-function carregarDashboard(){
-let total=0;
-
-db.collection("clientes").where("userId","==",userId).get().then(snap=>{
-snap.forEach(doc=>{total+=doc.data().mensalidade});
-
-totalClientes.innerHTML="Clientes: "+snap.size;
-saldo.innerHTML="Receita: R$ "+total.toFixed(2);
-
-graficoDashboard(total);
-});
-}
-
-function graficoDashboard(total){
-const ctx=document.getElementById('grafico');
-if(window.grafico)window.grafico.destroy();
-
-window.grafico=new Chart(ctx,{
-type:'bar',
-data:{
-labels:['Receita'],
-datasets:[{data:[total]}]
-}
-});
-}
 
 function carregarTudo(){
 render("clientes",listaClientes);
