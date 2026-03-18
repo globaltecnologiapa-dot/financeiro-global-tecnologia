@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Financeiro PRO</title>
 
+<!-- FAVICON LOCALIZAÇÃO -->
+<link rel="icon" href="data:image/svg+xml,
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<circle cx='50' cy='50' r='40' fill='%23ef4444'/>
+<circle cx='50' cy='50' r='15' fill='white'/>
+</svg>">
+
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -12,15 +19,31 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-body{margin:0;background:#0f172a;color:#fff;font-family:Arial}
+body{margin:0;font-family:Arial;background:linear-gradient(135deg,#0f172a,#020617);color:#fff}
 .container{display:flex}
-.sidebar{width:220px;background:#111827;padding:20px}
+.sidebar{width:230px;background:#111827;padding:20px}
 .sidebar button{width:100%;margin:5px 0;padding:10px;background:#1f2937;color:#fff;border:none;border-radius:6px}
+.sidebar button:hover{background:#22c55e;color:#000}
 .main{flex:1;padding:20px}
-.card{background:#1e293b;padding:10px;margin:10px 0;border-radius:10px}
-input,select{width:100%;padding:8px;margin:5px 0;background:#0f172a;color:#fff;border:none}
+.card{background:#1e293b;padding:10px;margin:10px 0;border-radius:10px;box-shadow:0 0 10px rgba(0,255,150,0.2)}
+input,select{width:100%;padding:8px;margin:5px 0;background:#0f172a;color:#fff;border:none;border-radius:6px}
+button{cursor:pointer}
 .abrir{background:#3b82f6}
 .delete{background:#ef4444}
+
+/* LOGIN CENTRAL */
+#loginDiv{
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+/* LIGHT MODE */
+.light{background:#f1f5f9;color:#000}
+.light .card{background:#fff;color:#000}
+.light .sidebar{background:#e2e8f0}
 </style>
 </head>
 
@@ -42,6 +65,7 @@ input,select{width:100%;padding:8px;margin:5px 0;background:#0f172a;color:#fff;b
 <button onclick="mostrar('financeiro')">Financeiro</button>
 <button onclick="mostrar('links')">Links</button>
 <button onclick="mostrar('relatorios')">Relatórios</button>
+<button onclick="toggleTema()">🌙/☀️</button>
 <button onclick="logout()">Sair</button>
 </div>
 
@@ -50,6 +74,8 @@ input,select{width:100%;padding:8px;margin:5px 0;background:#0f172a;color:#fff;b
 <!-- DASHBOARD -->
 <div id="dashboard">
 <h2>Dashboard</h2>
+
+<div id="dataHora"></div>
 
 <select id="mesSelecionado" onchange="carregarDashboard()">
 <option value="0">Jan</option><option value="1">Fev</option>
@@ -61,6 +87,10 @@ input,select{width:100%;padding:8px;margin:5px 0;background:#0f172a;color:#fff;b
 </select>
 
 <div id="saldo"></div>
+
+<h3>Links Rápidos</h3>
+<div id="linksDashboard"></div>
+
 <button onclick="gerarPDF()">📄 Gerar PDF</button>
 
 <canvas id="grafico"></canvas>
@@ -108,10 +138,12 @@ const auth=firebase.auth();
 const db=firebase.firestore();
 let userId;
 
+// LOGIN
 function login(){auth.signInWithEmailAndPassword(email.value,senha.value)}
 function registrar(){auth.createUserWithEmailAndPassword(email.value,senha.value)}
 function logout(){auth.signOut()}
 
+// AUTH
 auth.onAuthStateChanged(user=>{
 if(user){
 userId=user.uid;
@@ -124,8 +156,11 @@ app.style.display="none";
 }
 });
 
+// SALVAR
 function salvar(col,data){
-db.collection(col).add(data).then(carregarTudo);
+db.collection(col).add(data)
+.then(()=>carregarTudo())
+.catch(e=>alert("Erro: "+e.message));
 }
 
 // FINANCEIRO
@@ -214,7 +249,6 @@ saldo.innerHTML=`
 `;
 
 grafico();
-
 });
 }
 
@@ -224,7 +258,6 @@ let meses=Array(12).fill(0);
 
 db.collection("financeiro").where("userId","==",userId).get()
 .then(snap=>{
-
 snap.forEach(doc=>{
 let f=doc.data();
 if(!f.data) return;
@@ -246,7 +279,31 @@ labels:['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
 datasets:[{label:'Receita',data:meses}]
 }
 });
+});
+}
 
+// DATA HORA
+setInterval(()=>{
+let agora=new Date();
+dataHora.innerHTML=agora.toLocaleString('pt-BR');
+},1000);
+
+// TEMA
+function toggleTema(){document.body.classList.toggle("light")}
+
+// LINKS DASHBOARD
+function carregarLinksDashboard(){
+db.collection("links").where("userId","==",userId)
+.onSnapshot(snap=>{
+linksDashboard.innerHTML="";
+snap.forEach(doc=>{
+let d=doc.data();
+let url=d.url.startsWith('http')?d.url:'https://'+d.url;
+
+linksDashboard.innerHTML+=`
+<button class="abrir" onclick="window.open('${url}')">${d.nome}</button>
+`;
+});
 });
 }
 
@@ -255,33 +312,18 @@ async function gerarPDF(){
 const { jsPDF } = window.jspdf;
 const doc = new jsPDF();
 
-let y=10;
-doc.text("Relatório Financeiro",10,y);
-
-let mes=Number(mesSelecionado.value);
-let ano=new Date().getFullYear();
-
-await db.collection("financeiro").where("userId","==",userId).get()
-.then(snap=>{
-snap.forEach(d=>{
-let f=d.data();
-if(!f.data) return;
-
-let data=new Date(f.data);
-
-if(data.getMonth()==mes && data.getFullYear()==ano){
-y+=10;
-doc.text(`${f.tipo} - R$ ${f.valor} - ${f.descricao||""}`,10,y);
-}
-});
-});
-
+doc.text("Relatório Financeiro",10,10);
 doc.save("relatorio.pdf");
 }
 
+// INIT
 function carregarTudo(){
+let hoje=new Date();
+mesSelecionado.value=hoje.getMonth();
+
 render("financeiro",listaFinanceiro);
 render("links",listaLinks);
+carregarLinksDashboard();
 carregarDashboard();
 }
 
