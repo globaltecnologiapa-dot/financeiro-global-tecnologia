@@ -145,24 +145,24 @@ a {
 </div>
 
 <!-- CLIENTES -->
-if(!nome.value || !telefone.value){
-  alert("Preencha nome e telefone!");
-  return;
-}
+<div id="clientes" style="display:none;">
+
+<h2>Clientes</h2>
 
 <div class="card">
-<input id="nome" placeholder="Nome">
-<input id="telefone" placeholder="Telefone">
-<input id="endereco" placeholder="Endereço">
-<input id="mensalidade" placeholder="Mensalidade">
-<input id="qtdVeiculos" placeholder="Quantidade de veículos">
-<input id="placas" placeholder="Placas (separadas por vírgula)">
-<input id="contrato" placeholder="Link do contrato">
+  <input id="nome" placeholder="Nome">
+  <input id="telefone" placeholder="Telefone">
+  <input id="endereco" placeholder="Endereço">
+  <input id="mensalidade" placeholder="Mensalidade">
+  <input id="qtdVeiculos" placeholder="Quantidade de veículos">
+  <input id="placas" placeholder="Placas (separadas por vírgula)">
+  <input id="contrato" placeholder="Link do contrato">
 
-<button class="action" onclick="salvarCliente()">Salvar</button>
+  <button class="action" onclick="salvarCliente()">Salvar</button>
 </div>
 
 <div id="listaClientes"></div>
+
 </div>
   
 <!-- RASTREADORES -->
@@ -285,27 +285,55 @@ function del(col,id){ db.collection(col).doc(id).delete(); }
 let editId = null;
 
 function salvarCliente(){
-  let data = {
-    userId,
-    nome: nome.value,
-    telefone: telefone.value,
-    endereco: endereco.value,
-    mensalidade: Number(mensalidade.value),
-    qtdVeiculos: Number(qtdVeiculos.value),
-    placas: placas.value.split(",").map(p => p.trim()),
-    contrato: contrato.value
-  };
 
-  if(editId){
-    db.collection("clientes").doc(editId).update(data);
-    editId = null;
-  } else {
-    db.collection("clientes").add(data);
+  // 🔒 Validação obrigatória
+  if(!nome.value || !telefone.value){
+    alert("Preencha nome e telefone!");
+    return;
   }
 
-  limparCampos();
-}
+  let data = {
+    userId,
+    nome: nome.value.trim(),
+    telefone: telefone.value.trim(),
+    endereco: endereco.value.trim(),
 
+    mensalidade: Number(mensalidade.value) || 0,
+    qtdVeiculos: Number(qtdVeiculos.value) || 0,
+
+    placas: placas.value
+      ? placas.value.split(",").map(p => p.trim())
+      : [],
+
+    contrato: contrato.value.trim(),
+
+    // 🔥 preparação para financeiro automático
+    vencimento: 10,
+    ultimoPagamento: null,
+    criadoEm: new Date().toISOString()
+  };
+
+  // 💾 salvar ou editar
+  let ref;
+
+  if(editId){
+    ref = db.collection("clientes").doc(editId).update(data);
+    editId = null;
+  } else {
+    ref = db.collection("clientes").add(data);
+  }
+
+  // ✅ tratamento de sucesso/erro
+  ref.then(()=>{
+    limparCampos();
+    alert("Cliente salvo com sucesso!");
+  })
+  .catch(err=>{
+    console.error(err);
+    alert("Erro ao salvar cliente!");
+  });
+
+}
 function editarCliente(id){
   db.collection("clientes").doc(id).get().then(doc=>{
     let c = doc.data();
