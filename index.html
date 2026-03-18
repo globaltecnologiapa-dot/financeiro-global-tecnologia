@@ -3,34 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Global Rastreamento PRO</title>
-
-<link rel="icon" href="https://cdn-icons-png.flaticon.com/512/684/684908.png">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<title>Global Rastreamento PRO FINAL</title>
+<link rel="icon" href="https://globaltecnologiapa-dot.github.io/crm.globalrastreamento/favicon.ico" type="image/x-icon">
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body{margin:0;font-family:Arial;background:#0f172a;color:#fff}
 .container{display:flex}
 .sidebar{width:240px;background:#020617;height:100vh;padding:15px}
-.sidebar button{width:100%;margin:5px 0;padding:10px;background:#1e293b;border:none;color:#fff;border-radius:8px}
-.main{flex:1;padding:20px}
+.sidebar button{width:100%;margin:5px 0;padding:10px;background:#1e293b;border:none;color:#fff;border-radius:8px;cursor:pointer}
+.sidebar button:hover{background:#22c55e;color:#000}
+.main{flex:1;padding:20px;overflow:auto;height:100vh}
 .card{background:#1e293b;padding:15px;border-radius:10px;margin-bottom:10px}
 input,select{width:100%;padding:8px;margin:5px 0;border-radius:6px;border:none}
 button{margin-top:5px;padding:8px;border:none;border-radius:6px;cursor:pointer}
 .delete{background:#ef4444;color:#fff}
-.edit{background:#22c55e}
+.edit{background:#22c55e;color:#000}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
-#toast{position:fixed;bottom:20px;right:20px;background:#22c55e;color:#fff;padding:12px 20px;border-radius:8px;display:none}
+#grafico{max-width:100%;height:300px;margin:20px auto}
 </style>
 </head>
 <body>
 
-<div id="toast"></div>
-
+<!-- LOGIN -->
 <div id="loginDiv">
 <h2>Login</h2>
 <input id="email" placeholder="Email">
@@ -39,21 +38,25 @@ button{margin-top:5px;padding:8px;border:none;border-radius:6px;cursor:pointer}
 <button onclick="registrar()">Criar Conta</button>
 </div>
 
+<!-- APP -->
 <div id="app" style="display:none;">
 <div class="container">
 
 <div class="sidebar">
+<h3>Global Rastreamento</h3>
 <button onclick="mostrar('dashboard')">Dashboard</button>
 <button onclick="mostrar('clientes')">Clientes</button>
 <button onclick="mostrar('rastreadores')">Rastreadores</button>
 <button onclick="mostrar('financeiro')">Financeiro</button>
 <button onclick="mostrar('estoque')">Estoque</button>
+<button onclick="mostrar('links')">Links</button>
 <button onclick="mostrar('relatorios')">Relatórios</button>
 <button onclick="logout()">Sair</button>
 </div>
 
 <div class="main">
 
+<!-- DASHBOARD -->
 <div id="dashboard">
 <h2>Dashboard</h2>
 <div class="grid">
@@ -61,31 +64,32 @@ button{margin-top:5px;padding:8px;border:none;border-radius:6px;cursor:pointer}
 <div class="card" id="totalRastreadores"></div>
 <div class="card" id="saldo"></div>
 </div>
-<canvas id="graficoFinanceiro"></canvas>
+<canvas id="grafico"></canvas>
 </div>
 
+<!-- CLIENTES -->
 <div id="clientes" style="display:none;">
 <h2>Clientes</h2>
 <input id="nome" placeholder="Nome">
 <input id="telefone" placeholder="Telefone">
 <input id="endereco" placeholder="Endereço">
 <input id="mensalidade" placeholder="Mensalidade">
-<input id="placas" placeholder="Placas">
+<input id="placas" placeholder="Placas (separadas por vírgula)">
 <button onclick="salvarCliente()">Salvar</button>
-<button onclick="cancelarEdicao()">Cancelar</button>
 <div id="listaClientes"></div>
 </div>
 
+<!-- RASTREADORES -->
 <div id="rastreadores" style="display:none;">
 <h2>Rastreadores</h2>
 <input id="imei" placeholder="IMEI">
 <input id="modelo" placeholder="Modelo">
 <select id="statusR"><option>Ativo</option><option>Inativo</option></select>
 <button onclick="salvarRastreador()">Salvar</button>
-<button onclick="cancelarEdicao()">Cancelar</button>
 <div id="listaRastreadores"></div>
 </div>
 
+<!-- FINANCEIRO -->
 <div id="financeiro" style="display:none;">
 <h2>Financeiro</h2>
 <input id="valor" placeholder="Valor">
@@ -93,19 +97,28 @@ button{margin-top:5px;padding:8px;border:none;border-radius:6px;cursor:pointer}
 <input id="descricao" placeholder="Descrição">
 <select id="status"><option>Pendente</option><option>Pago</option></select>
 <button onclick="salvarFinanceiro()">Salvar</button>
-<button onclick="cancelarEdicao()">Cancelar</button>
 <div id="listaFinanceiro"></div>
 </div>
 
+<!-- ESTOQUE -->
 <div id="estoque" style="display:none;">
 <h2>Estoque</h2>
 <input id="produto" placeholder="Produto">
 <input id="quantidade" placeholder="Qtd">
 <button onclick="salvarEstoque()">Salvar</button>
-<button onclick="cancelarEdicao()">Cancelar</button>
 <div id="listaEstoque"></div>
 </div>
 
+<!-- LINKS -->
+<div id="links" style="display:none;">
+<h2>Links</h2>
+<input id="nomeLink" placeholder="Nome">
+<input id="urlLink" placeholder="URL">
+<button onclick="salvarLink()">Salvar</button>
+<div id="listaLinks"></div>
+</div>
+
+<!-- RELATORIOS -->
 <div id="relatorios" style="display:none;">
 <h2>Relatórios</h2>
 <div id="relatorioConteudo"></div>
@@ -116,77 +129,107 @@ button{margin-top:5px;padding:8px;border:none;border-radius:6px;cursor:pointer}
 </div>
 
 <script>
-const firebaseConfig={apiKey:"AIzaSyApCbQJCUQSwP0g6vSBqwrIMSK7n-w9ILc",authDomain:"global-tecnologia-kanban.firebaseapp.com",projectId:"global-tecnologia-kanban"};
+// CONFIG FIREBASE
+const firebaseConfig={
+apiKey:"AIzaSyApCbQJCUQSwP0g6vSBqwrIMSK7n-w9ILc",
+authDomain:"global-tecnologia-kanban.firebaseapp.com",
+projectId:"global-tecnologia-kanban"
+};
 firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth();
-const db=firebase.firestore()
-let userId;
-let editId=null;
-let editCol=null;
+const db=firebase.firestore();
+let userId, editId=null, editCol=null;
 
-function mostrarToast(msg,cor="#22c55e"){toast.innerText=msg;toast.style.background=cor;toast.style.display="block";setTimeout(()=>toast.style.display="none",2000)}
-
-function limparCampos(){document.querySelectorAll("input,select").forEach(el=>el.value="")}
-function cancelarEdicao(){editId=null;editCol=null;limparCampos();mostrarToast("Cancelado","#f59e0b")}
-
+// LOGIN
 function login(){auth.signInWithEmailAndPassword(email.value,senha.value)}
 function registrar(){auth.createUserWithEmailAndPassword(email.value,senha.value)}
 function logout(){auth.signOut()}
 
-auth.onAuthStateChanged(user=>{if(user){userId=user.uid;loginDiv.style.display="none";app.style.display="block";carregarTudo();}})
+auth.onAuthStateChanged(user=>{
+if(user){userId=user.uid;loginDiv.style.display="none";app.style.display="block";carregarTudo();}
+else{loginDiv.style.display="block";app.style.display="none";}
+});
 
+// FUNÇÕES GLOBAIS DE SALVAR E EDITAR
 function salvar(col,data){
-if(editId && editCol===col){db.collection(col).doc(editId).update(data);mostrarToast("Atualizado");editId=null;editCol=null}
-else{db.collection(col).add(data);mostrarToast("Salvo")}
-limparCampos();
+if(editId && editCol===col){db.collection(col).doc(editId).update(data);editId=null;editCol=null;}
+else{db.collection(col).add(data);}
+carregarTudo();
 }
 
 function editar(col,id){
 db.collection(col).doc(id).get().then(doc=>{
-let d=doc.data();editId=id;editCol=col;limparCampos();
+let d=doc.data();
+editId=id; editCol=col;
 Object.keys(d).forEach(k=>{if(document.getElementById(k))document.getElementById(k).value=d[k]});
-mostrarToast("Editando","#3b82f6");
-});}
+});
+}
 
-function del(col,id){if(confirm("Excluir?")){db.collection(col).doc(id).delete();mostrarToast("Excluído","#ef4444")}}
+function del(col,id){db.collection(col).doc(id).delete();carregarTudo();}
 
-function salvarCliente(){salvar("clientes",{userId,nome:nome.value,telefone:telefone.value,endereco:endereco.value,mensalidade:mensalidade.value,placas:placas.value})}
-function salvarRastreador(){salvar("rastreadores",{userId,imei:imei.value,modelo:modelo.value,status:statusR.value})}
-function salvarFinanceiro(){salvar("financeiro",{userId,valor:Number(valor.value)||0,tipo:tipo.value,descricao:descricao.value,status:status.value})}
-function salvarEstoque(){salvar("estoque",{userId,produto:produto.value,quantidade:quantidade.value})}
+// SALVAR ABAS
+function salvarCliente(){salvar("clientes",{userId,nome:nome.value,telefone:telefone.value,endereco:endereco.value,mensalidade:Number(mensalidade.value)||0,placas:placas.value.split(",").map(p=>p.trim())});}
+function salvarRastreador(){salvar("rastreadores",{userId,imei:imei.value,modelo:modelo.value,status:statusR.value});}
+function salvarFinanceiro(){salvar("financeiro",{userId,valor:Number(valor.value)||0,tipo:tipo.value,descricao:descricao.value,status:status.value});}
+function salvarEstoque(){salvar("estoque",{userId,produto:produto.value,quantidade:Number(quantidade.value)||0});}
+function salvarLink(){salvar("links",{userId,nome:nomeLink.value,url:urlLink.value});}
 
+// RENDERIZAÇÃO LISTAS
 function render(col,lista){
 db.collection(col).where("userId","==",userId).onSnapshot(snap=>{
 lista.innerHTML="";
 snap.forEach(doc=>{
 let d=doc.data();
-lista.innerHTML+=`<div class='card'>${Object.values(d).join(" | ")}<br>
+let valores=Object.entries(d).map(([k,v])=>`${v}`).join(" | ");
+lista.innerHTML+=`<div class='card'>${valores}<br>
 <button class='edit' onclick="editar('${col}','${doc.id}')">Editar</button>
-<button class='delete' onclick="del('${col}','${doc.id}')">Excluir</button></div>`;
-});});}
+<button class='delete' onclick="del('${col}','${doc.id}')">Excluir</button>
+</div>`;
+});
+});
+}
 
+// DASHBOARD COM GRÁFICO
 function carregarDashboard(){
+let entrada=0,saida=0;
 db.collection("clientes").where("userId","==",userId).get().then(s=>totalClientes.innerHTML="Clientes: "+s.size);
 db.collection("rastreadores").where("userId","==",userId).get().then(s=>totalRastreadores.innerHTML="Rastreadores: "+s.size);
-
-db.collection("financeiro").where("userId","==",userId).get().then(s=>{
-let entrada=0,saida=0;
-s.forEach(doc=>{
+db.collection("financeiro").where("userId","==",userId).get().then(snap=>{
+snap.forEach(doc=>{
 let f=doc.data();
-if(f.status==="Pago"){
-if(f.tipo==="Entrada")entrada+=f.valor;
-if(f.tipo==="Saída")saida+=f.valor;
-}
+if(f.tipo==="Entrada"&&f.status==="Pago")entrada+=f.valor;
+if(f.tipo==="Saída"&&f.status==="Pago")saida+=f.valor;
 });
 let saldoFinal=entrada-saida;
-let reinvest=saldoFinal*0.3;
-let retirada=saldoFinal*0.5;
+saldo.innerHTML=`💰 ${saldoFinal.toFixed(2)}<br>Entrada: ${entrada}<br>Saída: ${saida}`;
+graficoDashboard(saldoFinal);
+});
+}
 
-saldo.innerHTML=`💰 Saldo: R$ ${saldoFinal.toFixed(2)}<br>📦 Reinvestir: R$ ${reinvest.toFixed(2)}<br>👤 Retirada: R$ ${retirada.toFixed(2)}`;
+// FUNÇÃO GRÁFICO
+function graficoDashboard(saldoFinal){
+const ctx=document.getElementById('grafico').getContext('2d');
+if(window.grafico)window.grafico.destroy();
+window.grafico=new Chart(ctx,{
+type:'bar',
+data:{
+labels:['Saldo Total','Reinvestimento (40%)','Retirada (60%)'],
+datasets:[{
+label:'R$',
+data:[saldoFinal,saldoFinal*0.4,saldoFinal*0.6],
+backgroundColor:['#22c55e','#3b82f6','#f59e0b']
+}]
+},
+options:{
+responsive:true,
+maintainAspectRatio:false,
+plugins:{legend:{display:false}},
+scales:{y:{beginAtZero:true}}
+}
+});
+}
 
-new Chart(graficoFinanceiro,{type:'doughnut',data:{labels:["Entradas","Saídas"],datasets:[{data:[entrada,saida]}]}});
-});}
-
+// RELATÓRIOS
 function carregarRelatorios(){
 db.collection("financeiro").where("userId","==",userId).get().then(snap=>{
 let html="";
@@ -195,17 +238,21 @@ let f=doc.data();
 html+=`<div>${f.tipo} - R$ ${f.valor} - ${f.status}</div>`;
 });
 relatorioConteudo.innerHTML=html;
-});}
+});
+}
 
+// CARREGAR TUDO
 function carregarTudo(){
 render("clientes",listaClientes);
 render("rastreadores",listaRastreadores);
 render("financeiro",listaFinanceiro);
 render("estoque",listaEstoque);
+render("links",listaLinks);
 carregarDashboard();
 carregarRelatorios();
 }
 
+// NAVEGAÇÃO
 function mostrar(id){document.querySelectorAll('.main>div').forEach(d=>d.style.display='none');document.getElementById(id).style.display='block'}
 </script>
 
