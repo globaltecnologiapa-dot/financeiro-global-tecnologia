@@ -165,16 +165,29 @@ db.collection(col).add(data)
 
 // FINANCEIRO
 function salvarFinanceiro(){
-salvar("financeiro",{
-userId,
-valor:parseFloat(valor.value.replace(",", "."))||0,
-tipo:tipo.value,
-descricao:descricao.value,
-status:status.value,
-data:new Date().toISOString()
-});
-}
 
+const valorInput = document.getElementById("valor");
+const tipoInput = document.getElementById("tipo");
+const descricaoInput = document.getElementById("descricao");
+const statusInput = document.getElementById("status");
+
+db.collection("financeiro").add({
+userId,
+valor: parseFloat(valorInput.value.replace(",", ".")) || 0,
+tipo: tipoInput.value,
+descricao: descricaoInput.value,
+status: statusInput.value,
+data: new Date().toISOString()
+})
+.then(()=>{
+alert("Salvo com sucesso ✅");
+carregarTudo();
+})
+.catch(e=>{
+alert("Erro ao salvar: " + e.message);
+});
+
+}
 // LINKS
 function salvarLink(){
 salvar("links",{userId,nome:nomeLink.value,url:urlLink.value});
