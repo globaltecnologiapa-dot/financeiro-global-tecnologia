@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Global Rastreamento PRO FINAL</title>
+<title>Global Rastreamento PRO UX</title>
 <link rel="icon" href="https://globaltecnologiapa-dot.github.io/crm.globalrastreamento/favicon.ico" type="image/x-icon">
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -13,25 +13,26 @@
 
 <style>
 body{margin:0;font-family:Arial;background:#0f172a;color:#fff}
-.container{display:flex}
-.sidebar{width:240px;background:#020617;height:100vh;padding:15px}
-.sidebar button{width:100%;margin:5px 0;padding:10px;background:#1e293b;border:none;color:#fff;border-radius:8px;cursor:pointer}
+.container{display:flex;min-height:100vh}
+.sidebar{width:260px;background:#111827;height:100vh;padding:20px;box-shadow:2px 0 5px rgba(0,0,0,0.3)}
+.sidebar h3{color:#fff;margin-bottom:20px;text-align:center}
+.sidebar button{width:100%;margin:8px 0;padding:12px;background:#1f2937;border:none;color:#fff;border-radius:8px;font-weight:600;cursor:pointer;transition:0.2s}
 .sidebar button:hover{background:#22c55e;color:#000}
-.main{flex:1;padding:20px;overflow:auto;height:100vh}
-.card{background:#1e293b;padding:15px;border-radius:10px;margin-bottom:10px}
-input,select{width:100%;padding:8px;margin:5px 0;border-radius:6px;border:none}
-button{margin-top:5px;padding:8px;border:none;border-radius:6px;cursor:pointer}
+.main{flex:1;padding:25px;overflow:auto}
+.card{background:#1e293b;padding:15px;border-radius:12px;margin-bottom:15px;box-shadow:0 2px 6px rgba(0,0,0,0.5)}
+input,select{width:100%;padding:10px;margin:6px 0;border-radius:6px;border:none;background:#0f172a;color:#fff}
+input::placeholder{color:#9ca3af}
+button{margin-top:6px;padding:10px;border:none;border-radius:6px;cursor:pointer;font-weight:600}
 .delete{background:#ef4444;color:#fff}
 .edit{background:#22c55e;color:#000}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
-#graficoContainer{width:100%;height:350px;margin-top:20px;}
-#grafico{width:100%;height:100%;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+#graficoContainer{width:100%;height:300px;margin-top:20px;border-radius:12px;background:#1e293b;padding:10px;box-shadow:0 2px 6px rgba(0,0,0,0.5)}
 </style>
 </head>
 <body>
 
 <!-- LOGIN -->
-<div id="loginDiv">
+<div id="loginDiv" style="padding:20px">
 <h2>Login</h2>
 <input id="email" placeholder="Email">
 <input id="senha" type="password" placeholder="Senha">
@@ -71,7 +72,7 @@ button{margin-top:5px;padding:8px;border:none;border-radius:6px;cursor:pointer}
 </div>
 
 <!-- CLIENTES -->
-<div id="clientes" style="display:none;">
+<div id="clientes" style="display:none">
 <h2>Clientes</h2>
 <input id="nome" placeholder="Nome">
 <input id="telefone" placeholder="Telefone">
@@ -83,7 +84,7 @@ button{margin-top:5px;padding:8px;border:none;border-radius:6px;cursor:pointer}
 </div>
 
 <!-- RASTREADORES -->
-<div id="rastreadores" style="display:none;">
+<div id="rastreadores" style="display:none">
 <h2>Rastreadores</h2>
 <input id="imei" placeholder="IMEI">
 <input id="modelo" placeholder="Modelo">
@@ -93,7 +94,7 @@ button{margin-top:5px;padding:8px;border:none;border-radius:6px;cursor:pointer}
 </div>
 
 <!-- FINANCEIRO -->
-<div id="financeiro" style="display:none;">
+<div id="financeiro" style="display:none">
 <h2>Financeiro</h2>
 <input id="valor" placeholder="Valor">
 <select id="tipo"><option>Entrada</option><option>Saída</option></select>
@@ -104,7 +105,7 @@ button{margin-top:5px;padding:8px;border:none;border-radius:6px;cursor:pointer}
 </div>
 
 <!-- ESTOQUE -->
-<div id="estoque" style="display:none;">
+<div id="estoque" style="display:none">
 <h2>Estoque</h2>
 <input id="produto" placeholder="Produto">
 <input id="quantidade" placeholder="Qtd">
@@ -113,7 +114,7 @@ button{margin-top:5px;padding:8px;border:none;border-radius:6px;cursor:pointer}
 </div>
 
 <!-- LINKS -->
-<div id="links" style="display:none;">
+<div id="links" style="display:none">
 <h2>Links</h2>
 <input id="nomeLink" placeholder="Nome">
 <input id="urlLink" placeholder="URL">
@@ -122,7 +123,7 @@ button{margin-top:5px;padding:8px;border:none;border-radius:6px;cursor:pointer}
 </div>
 
 <!-- RELATORIOS -->
-<div id="relatorios" style="display:none;">
+<div id="relatorios" style="display:none">
 <h2>Relatórios</h2>
 <div id="relatorioConteudo"></div>
 </div>
@@ -132,7 +133,7 @@ button{margin-top:5px;padding:8px;border:none;border-radius:6px;cursor:pointer}
 </div>
 
 <script>
-// CONFIG FIREBASE
+// FIREBASE
 const firebaseConfig={
 apiKey:"AIzaSyApCbQJCUQSwP0g6vSBqwrIMSK7n-w9ILc",
 authDomain:"global-tecnologia-kanban.firebaseapp.com",
@@ -153,7 +154,7 @@ if(user){userId=user.uid;loginDiv.style.display="none";app.style.display="block"
 else{loginDiv.style.display="block";app.style.display="none";}
 });
 
-// FUNÇÕES GLOBAIS DE SALVAR E EDITAR
+// SALVAR E EDITAR
 function salvar(col,data){
 if(editId && editCol===col){db.collection(col).doc(editId).update(data);editId=null;editCol=null;}
 else{db.collection(col).add(data);}
@@ -170,14 +171,14 @@ Object.keys(d).forEach(k=>{if(document.getElementById(k))document.getElementById
 
 function del(col,id){db.collection(col).doc(id).delete();carregarTudo();}
 
-// SALVAR ABAS
+// ABAS
 function salvarCliente(){salvar("clientes",{userId,nome:nome.value,telefone:telefone.value,endereco:endereco.value,mensalidade:Number(mensalidade.value)||0,placas:placas.value.split(",").map(p=>p.trim())});}
 function salvarRastreador(){salvar("rastreadores",{userId,imei:imei.value,modelo:modelo.value,status:statusR.value});}
 function salvarFinanceiro(){salvar("financeiro",{userId,valor:Number(valor.value)||0,tipo:tipo.value,descricao:descricao.value,status:status.value});}
 function salvarEstoque(){salvar("estoque",{userId,produto:produto.value,quantidade:Number(quantidade.value)||0});}
 function salvarLink(){salvar("links",{userId,nome:nomeLink.value,url:urlLink.value});}
 
-// RENDERIZAÇÃO LISTAS
+// RENDER
 function render(col,lista){
 db.collection(col).where("userId","==",userId).onSnapshot(snap=>{
 lista.innerHTML="";
@@ -192,7 +193,7 @@ lista.innerHTML+=`<div class='card'>${valores}<br>
 });
 }
 
-// DASHBOARD COM GRÁFICO
+// DASHBOARD + GRÁFICO
 function carregarDashboard(){
 let entrada=0,saida=0;
 db.collection("clientes").where("userId","==",userId).get().then(s=>totalClientes.innerHTML="Clientes: "+s.size);
@@ -209,7 +210,7 @@ graficoDashboard(saldoFinal,entrada,saida);
 });
 }
 
-// FUNÇÃO GRÁFICO
+// GRÁFICO
 function graficoDashboard(saldoFinal,entrada,saida){
 const ctx=document.getElementById('grafico').getContext('2d');
 if(window.grafico)window.grafico.destroy();
