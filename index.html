@@ -145,8 +145,10 @@ a {
 </div>
 
 <!-- CLIENTES -->
-<div id="clientes" style="display:none;">
-<h2>Clientes</h2>
+if(!nome.value || !telefone.value){
+  alert("Preencha nome e telefone!");
+  return;
+}
 
 <div class="card">
 <input id="nome" placeholder="Nome">
@@ -380,21 +382,18 @@ ${r.imei} - ${r.status}
 // FINANCEIRO
 let editFinanceiroId = null;
 
-function editarFinanceiro(id){
-  db.collection("financeiro").doc(id).get().then(doc=>{
-    let f = doc.data();
+function addFinanceiro(){
 
-    valor.value = f.valor;
-    tipo.value = f.tipo;
-    descricao.value = f.descricao;
-    data.value = f.data;
-    status.value = f.status;
-    categoria.value = f.categoria;
-    fixo.value = f.fixo;
-
-    editFinanceiroId = id;
-  });
-}
+  let dataObj = {
+    userId,
+    valor: Number(valor.value),
+    tipo: tipo.value,
+    descricao: descricao.value,
+    data: data.value || new Date().toISOString().split("T")[0],
+    status: status.value,
+    categoria: categoria.value,
+    fixo: fixo.value
+  };
 
   if(editFinanceiroId){
     db.collection("financeiro").doc(editFinanceiroId).update(dataObj);
@@ -482,7 +481,6 @@ function addEstoque(){
   custo.value = "";
 }
 
-function carregarEstoque(){
 function carregarEstoque(){
   db.collection("estoque").where("userId","==",userId)
   .onSnapshot(snap=>{
