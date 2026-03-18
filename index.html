@@ -183,9 +183,32 @@ a {
 <h2>Financeiro</h2>
 <div class="card">
 <input id="valor" placeholder="Valor">
+
 <select id="tipo">
 <option>Entrada</option>
 <option>Saída</option>
+</select>
+
+<input id="descricao" placeholder="Descrição">
+
+<input id="data" type="date">
+
+<select id="status">
+<option>Pendente</option>
+<option>Pago</option>
+</select>
+
+<select id="categoria">
+<option>Geral</option>
+<option>Chip</option>
+<option>Servidor</option>
+<option>Imposto</option>
+<option>Internet</option>
+</select>
+
+<select id="fixo">
+<option>Variável</option>
+<option>Fixo</option>
 </select>
 <button class="action" onclick="addFinanceiro()">Salvar</button>
 </div>
@@ -356,29 +379,67 @@ ${r.imei} - ${r.status}
 
 // FINANCEIRO
 function addFinanceiro(){
-db.collection("financeiro").add({ userId, valor:Number(valor.value), tipo:tipo.value });
+  db.collection("financeiro").add({
+    userId,
+    valor: Number(valor.value),
+    tipo: tipo.value,
+    descricao: descricao.value,
+    data: data.value,
+    status: status.value,
+    categoria: categoria.value,
+    fixo: fixo.value
+  });
 }
-
 function carregarFinanceiro(){
-db.collection("financeiro").where("userId","==",userId).onSnapshot(snap=>{
-listaFinanceiro.innerHTML="";
-let entrada=0, saida=0;
+  db.collection("financeiro").where("userId","==",userId)
+  .onSnapshot(snap=>{
 
-snap.forEach(doc=>{
-let f=doc.data();
-listaFinanceiro.innerHTML+=`
-<div class="card">
-${f.tipo} - R$ ${f.valor}
-<button class="delete" onclick="del('financeiro','${doc.id}')">Excluir</button>
-</div>`;
-if(f.tipo==="Entrada") entrada+=f.valor;
-else saida+=f.valor;
-});
+    listaFinanceiro.innerHTML="";
 
-saldo.innerHTML=`💰 R$ ${entrada-saida}`;
-});
+    let entrada=0, saida=0;
+
+    snap.forEach(doc=>{
+      let f = doc.data();
+
+      listaFinanceiro.innerHTML += `
+        <div class="card">
+          <b>${f.tipo} - R$ ${f.valor}</b><br>
+          📝 ${f.descricao || "-"}<br>
+          📅 ${f.data || "-"}<br>
+          📂 ${f.categoria || "-"}<br>
+          🔁 ${f.fixo || "-"}<br>
+          📌 ${f.status || "-"}<br>
+
+          <button onclick="marcarPago('${doc.id}')">Marcar como Pago</button>
+          <button class="delete" onclick="del('financeiro','${doc.id}')">Excluir</button>
+        </div>
+      `;
+
+      if(f.tipo === "Entrada" && f.status === "Pago"){
+        entrada += f.valor;
+      }
+
+      if(f.tipo === "Saída" && f.status === "Pago"){
+        saida += f.valor;
+      }
+    });
+
+    let saldoFinal = entrada - saida;
+
+    saldo.innerHTML = `
+      💰 Caixa: R$ ${saldoFinal.toFixed(2)} <br>
+      📈 Entradas: R$ ${entrada.toFixed(2)} <br>
+      📉 Saídas: R$ ${saida.toFixed(2)}
+    `;
+  });
+} 
+
+  function marcarPago(id){
+  db.collection("financeiro").doc(id).update({
+    status: "Pago"
+  });
 }
-
+  
 // ESTOQUE
 function addEstoque(){
 db.collection("estoque").add({ userId, produto:produto.value, quantidade:Number(quantidade.value) });
