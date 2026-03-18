@@ -380,22 +380,28 @@ ${r.imei} - ${r.status}
 // FINANCEIRO
 let editFinanceiroId = null;
 
-function editarFinanceiro(id){
-  db.collection("financeiro").doc(id).get().then(doc=>{
-    let f = doc.data();
+function addFinanceiro(){
 
-    valor.value = f.valor;
-    tipo.value = f.tipo;
-    descricao.value = f.descricao;
-    data.value = f.data;
-    status.value = f.status;
-    categoria.value = f.categoria;
-    fixo.value = f.fixo;
+  let dataObj = {
+    userId,
+    valor: Number(valor.value),
+    tipo: tipo.value,
+    descricao: descricao.value,
+    data: data.value,
+    status: status.value,
+    categoria: categoria.value,
+    fixo: fixo.value
+  };
 
-    editFinanceiroId = id;
-  });
+  if(editFinanceiroId){
+    db.collection("financeiro").doc(editFinanceiroId).update(dataObj);
+    editFinanceiroId = null;
+  } else {
+    db.collection("financeiro").add(dataObj);
+  }
+
+  limparFinanceiro();
 }
-
   function limparFinanceiro(){
   valor.value = "";
   descricao.value = "";
@@ -422,10 +428,10 @@ function carregarFinanceiro(){
           🔁 ${f.fixo || "-"}<br>
           📌 ${f.status || "-"}<br>
 
+          <button onclick="editarFinanceiro('${doc.id}')">Editar</button>
           <button onclick="marcarPago('${doc.id}')">Marcar como Pago</button>
           <button class="delete" onclick="del('financeiro','${doc.id}')">Excluir</button>
         </div>
-        <button onclick="editarFinanceiro('${doc.id}')">Editar</button>
       `;
 
       if(f.tipo === "Entrada" && f.status === "Pago"){
