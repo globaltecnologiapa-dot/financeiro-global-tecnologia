@@ -162,22 +162,6 @@ a {
 
 <div id="listaClientes"></div>
 </div>
-
-function editarCliente(id){
-  db.collection("clientes").doc(id).get().then(doc=>{
-    let c = doc.data();
-
-    nome.value = c.nome;
-    telefone.value = c.telefone;
-    endereco.value = c.endereco;
-    mensalidade.value = c.mensalidade;
-    qtdVeiculos.value = c.qtdVeiculos;
-    placas.value = c.placas ? c.placas.join(", ") : "";
-    contrato.value = c.contrato;
-
-    editId = id;
-  });
-}
   
 <!-- RASTREADORES -->
 <div id="rastreadores" style="display:none;">
@@ -276,6 +260,21 @@ function del(col,id){ db.collection(col).doc(id).delete(); }
 let editId = null;
 
 function salvarCliente(){
+function editarCliente(id){
+  db.collection("clientes").doc(id).get().then(doc=>{
+    let c = doc.data();
+
+    nome.value = c.nome;
+    telefone.value = c.telefone;
+    endereco.value = c.endereco;
+    mensalidade.value = c.mensalidade;
+    qtdVeiculos.value = c.qtdVeiculos;
+    placas.value = c.placas ? c.placas.join(", ") : "";
+    contrato.value = c.contrato;
+
+    editId = id;
+  });
+}
 
   let data = {
     userId,
