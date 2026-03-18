@@ -1,24 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Global Rastreamento PRO</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<style>
+body{font-family:Arial;margin:0;background:#0f172a;color:#fff}
+header{background:#020617;padding:10px;display:flex;justify-content:space-between}
+button{padding:8px;border:none;border-radius:6px;cursor:pointer}
+.action{background:#22c55e;color:#000}
+.delete{background:#ef4444;color:#fff}
+.container{padding:15px}
+.card{background:#1e293b;padding:10px;margin:10px 0;border-radius:10px}
+input,select{width:100%;margin:5px 0;padding:8px;border-radius:6px;border:none}
+.menu{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+</style>
+</head>
+
+<body>
+
+<div id="login">
+  <div class="container">
+    <h2>Login</h2>
+    <input id="email" placeholder="Email">
+    <input id="senha" type="password" placeholder="Senha">
+    <button onclick="login()">Entrar</button>
+    <button onclick="registrar()">Criar Conta</button>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+
+<header>
+  <span id="userEmail"></span>
+  <button onclick="logout()">Sair</button>
+</header>
+
+<div class="container">
+
+<div class="menu">
+<button onclick="mostrar('clientes')">Clientes</button>
+<button onclick="mostrar('financeiro')">Financeiro</button>
+<button onclick="mostrar('dashboard')">Dashboard</button>
+</div>
+
+<!-- CLIENTES -->
+<div id="clientes">
+<h3>Clientes</h3>
+<input id="nome" placeholder="Nome">
+<input id="telefone" placeholder="Telefone">
+<input id="endereco" placeholder="Endereço">
+<input id="mensalidade" placeholder="Mensalidade">
+<button class="action" onclick="salvarCliente()">Salvar</button>
+<div id="totalClientes"></div>
+<div id="listaClientes"></div>
+</div>
+
+<!-- FINANCEIRO -->
+<div id="financeiro" style="display:none">
+<h3>Financeiro</h3>
+<input id="valor" placeholder="Valor">
+<select id="tipo">
+<option>Entrada</option>
+<option>Saída</option>
+</select>
+<input id="descricao" placeholder="Descrição">
+<input id="data" type="date">
+<select id="status">
+<option>Pendente</option>
+<option>Pago</option>
+</select>
+<button class="action" onclick="addFinanceiro()">Salvar</button>
+<div id="listaFinanceiro"></div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" style="display:none">
+<h3>Resumo</h3>
+<div id="saldo"></div>
+</div>
+
+</div>
+</div>
+
 <script>
-// ================= FIREBASE =================
 const firebaseConfig = {
 apiKey: "AIzaSyApCbQJCUQSwP0g6vSBqwrIMSK7n-w9ILc",
 authDomain: "global-tecnologia-kanban.firebaseapp.com",
-projectId: "global-tecnologia-kanban",
-storageBucket: "global-tecnologia-kanban.firebasestorage.app",
-messagingSenderId: "526527534352",
-appId: "1:526527534352:web:22b874f8029b3cd4c48195"
+projectId: "global-tecnologia-kanban"
 };
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-let userId;
+let userId, editId=null, editFinanceiroId=null;
 
-// ================= AUTH =================
-function login(){ auth.signInWithEmailAndPassword(email.value, senha.value); }
-function registrar(){ auth.createUserWithEmailAndPassword(email.value, senha.value); }
-function logout(){ auth.signOut(); }
+const email = document.getElementById("email");
+const senha = document.getElementById("senha");
+const nome = document.getElementById("nome");
+const telefone = document.getElementById("telefone");
+const endereco = document.getElementById("endereco");
+const mensalidade = document.getElementById("mensalidade");
+const listaClientes = document.getElementById("listaClientes");
+const totalClientes = document.getElementById("totalClientes");
+const valor = document.getElementById("valor");
+const tipo = document.getElementById("tipo");
+const descricao = document.getElementById("descricao");
+const data = document.getElementById("data");
+const status = document.getElementById("status");
+const listaFinanceiro = document.getElementById("listaFinanceiro");
+const saldo = document.getElementById("saldo");
+const loginDiv = document.getElementById("login");
+const app = document.getElementById("app");
+const userEmail = document.getElementById("userEmail");
+
+function login(){auth.signInWithEmailAndPassword(email.value,senha.value)}
+function registrar(){auth.createUserWithEmailAndPassword(email.value,senha.value)}
+function logout(){auth.signOut()}
 
 auth.onAuthStateChanged(user=>{
 if(user){
@@ -33,276 +138,51 @@ app.style.display="none";
 }
 });
 
-// ================= DELETE =================
-function del(col,id){ db.collection(col).doc(id).delete(); }
-
-// ================= CLIENTES =================
-let editId = null;
-
 function salvarCliente(){
-  if(!nome.value || !telefone.value){
-    alert("Preencha nome e telefone!");
-    return;
-  }
-
-  let data = {
-    userId,
-    nome: nome.value,
-    telefone: telefone.value,
-    endereco: endereco.value,
-    mensalidade: Number(mensalidade.value) || 0,
-    vencimento: 10
-  };
-
-  if(editId){
-    db.collection("clientes").doc(editId).update(data);
-    editId=null;
-  } else {
-    db.collection("clientes").add(data);
-  }
-
-  limparCampos();
-}
-
-function limparCampos(){
-  nome.value="";
-  telefone.value="";
-  endereco.value="";
-  mensalidade.value="";
+if(!userId)return;
+let dataObj={userId,nome:nome.value,telefone:telefone.value,endereco:endereco.value,mensalidade:Number(mensalidade.value)||0};
+if(editId){db.collection("clientes").doc(editId).update(dataObj);editId=null;}else{db.collection("clientes").add(dataObj);} 
 }
 
 function carregarClientes(){
-  db.collection("clientes").where("userId","==",userId)
-  .onSnapshot(snap=>{
-    listaClientes.innerHTML="";
-    totalClientes.innerHTML = "👥 "+snap.size+" Clientes";
-
-    snap.forEach(doc=>{
-      let c = doc.data();
-
-      let msg = `Olá ${c.nome}, sua mensalidade de R$ ${c.mensalidade} venceu. Regularize para evitar bloqueio.`;
-
-      listaClientes.innerHTML += `
-      <div class="card">
-      <b>${c.nome}</b><br>
-      📞 ${c.telefone}<br>
-      💰 R$ ${c.mensalidade}<br><br>
-
-      <a target="_blank" href="https://wa.me/55${c.telefone}?text=${encodeURIComponent(msg)}">
-      <button class="action">Cobrar no WhatsApp</button>
-      </a>
-
-      <button class="delete" onclick="del('clientes','${doc.id}')">Excluir</button>
-      </div>`;
-    });
-  });
+db.collection("clientes").where("userId","==",userId).onSnapshot(snap=>{
+listaClientes.innerHTML="";
+totalClientes.innerHTML="👥 "+snap.size;
+snap.forEach(doc=>{
+let c=doc.data();
+let tel=c.telefone.replace(/\D/g,"");
+listaClientes.innerHTML+=`<div class="card"><b>${c.nome}</b><br>${c.telefone}<br>R$ ${c.mensalidade}<br>
+<a target="_blank" href="https://wa.me/55${tel}?text=Cobrança"><button>WhatsApp</button></a>
+<button onclick="del('clientes','${doc.id}')">Excluir</button></div>`;
+});
+});
 }
-
-// ================= COBRANÇA AUTOMÁTICA =================
-function gerarCobrancas(){
-
-  let hoje = new Date();
-  let dia = hoje.getDate();
-  let dataHoje = hoje.toISOString().split("T")[0];
-
-  db.collection("clientes").where("userId","==",userId)
-  .get()
-  .then(snap=>{
-
-    snap.forEach(doc=>{
-      let c = doc.data();
-
-      if(dia === c.vencimento){
-
-        db.collection("financeiro")
-        .where("descricao","==",c.nome)
-        .where("data","==",dataHoje)
-        .get()
-        .then(existe=>{
-
-          if(existe.empty){
-
-            db.collection("financeiro").add({
-              userId,
-              valor: c.mensalidade,
-              tipo: "Entrada",
-              descricao: c.nome,
-              data: dataHoje,
-              status: "Pendente",
-              categoria: "Mensalidade",
-              fixo: "Fixo"
-            });
-
-          }
-
-        });
-
-      }
-
-    });
-
-  });
-
-}
-
-// ================= FINANCEIRO =================
-let editFinanceiroId = null;
 
 function addFinanceiro(){
+let dataObj={userId,valor:Number(valor.value)||0,tipo:tipo.value,descricao:descricao.value,data:data.value,status:status.value};
+if(editFinanceiroId){db.collection("financeiro").doc(editFinanceiroId).update(dataObj);editFinanceiroId=null;}else{db.collection("financeiro").add(dataObj);} }
 
-  let dataObj = {
-    userId,
-    valor: Number(valor.value) || 0,
-    tipo: tipo.value,
-    descricao: descricao.value,
-    data: data.value,
-    status: status.value,
-    categoria: categoria.value,
-    fixo: fixo.value
-  };
-
-  if(editFinanceiroId){
-    db.collection("financeiro").doc(editFinanceiroId).update(dataObj);
-    editFinanceiroId = null;
-  } else {
-    db.collection("financeiro").add(dataObj);
-  }
-
-  limparFinanceiro();
-}
-
-function editarFinanceiro(id){
-  db.collection("financeiro").doc(id).get().then(doc=>{
-    let f = doc.data();
-
-    valor.value = f.valor;
-    tipo.value = f.tipo;
-    descricao.value = f.descricao;
-    data.value = f.data;
-    status.value = f.status;
-    categoria.value = f.categoria;
-    fixo.value = f.fixo;
-
-    editFinanceiroId = id;
-  });
-}
-
-function limparFinanceiro(){
-  valor.value="";
-  descricao.value="";
-  data.value="";
-}
-
-function marcarPago(id){
-  db.collection("financeiro").doc(id).update({ status:"Pago" });
-}
-
-// DESPESAS FIXAS AUTOMÁTICAS
-function gerarDespesasFixas(){
-
-  let hoje = new Date().toISOString().split("T")[0];
-
-  db.collection("financeiro")
-  .where("userId","==",userId)
-  .where("fixo","==","Fixo")
-  .get()
-  .then(snap=>{
-
-    snap.forEach(doc=>{
-      let f = doc.data();
-
-      db.collection("financeiro")
-      .where("descricao","==",f.descricao)
-      .where("data","==",hoje)
-      .get()
-      .then(existe=>{
-
-        if(existe.empty){
-
-          db.collection("financeiro").add({
-            ...f,
-            data: hoje,
-            status: "Pendente"
-          });
-
-        }
-
-      });
-
-    });
-
-  });
-
-}
-
-// DASHBOARD FINANCEIRO
 function carregarFinanceiro(){
-  db.collection("financeiro").where("userId","==",userId)
-  .onSnapshot(snap=>{
-
-    listaFinanceiro.innerHTML="";
-    let entrada=0, saida=0;
-
-    let mesAtual = new Date().getMonth();
-    let anoAtual = new Date().getFullYear();
-
-    snap.forEach(doc=>{
-      let f = doc.data();
-      let dataObj = new Date(f.data);
-
-      if(dataObj.getMonth()===mesAtual && dataObj.getFullYear()===anoAtual){
-
-        listaFinanceiro.innerHTML += `
-        <div class="card">
-        <b>${f.tipo} - R$ ${f.valor}</b><br>
-        ${f.descricao}<br>
-        ${f.data}<br>
-        ${f.status}<br>
-
-        <button onclick="editarFinanceiro('${doc.id}')">Editar</button>
-        <button onclick="marcarPago('${doc.id}')">Pago</button>
-        <button class="delete" onclick="del('financeiro','${doc.id}')">Excluir</button>
-        </div>`;
-
-        if(f.tipo==="Entrada" && f.status==="Pago") entrada+=f.valor;
-        if(f.tipo==="Saída" && f.status==="Pago") saida+=f.valor;
-
-      }
-
-    });
-
-    let saldoFinal = entrada - saida;
-
-    saldo.innerHTML = `
-    💰 Lucro do mês: R$ ${saldoFinal.toFixed(2)}<br>
-    📈 Recebido: R$ ${entrada.toFixed(2)}<br>
-    📉 Despesas: R$ ${saida.toFixed(2)}<br><br>
-    🔁 Reinvestir: R$ ${(saldoFinal*0.4).toFixed(2)}<br>
-    💵 Retirar: R$ ${(saldoFinal*0.6).toFixed(2)}
-    `;
-
-    if(saldoFinal < 0){
-      saldo.innerHTML += "<br><br>⚠️ Prejuízo!";
-    }
-
-  });
+db.collection("financeiro").where("userId","==",userId).onSnapshot(snap=>{
+listaFinanceiro.innerHTML="";
+let entrada=0,saida=0;
+snap.forEach(doc=>{
+let f=doc.data();
+listaFinanceiro.innerHTML+=`<div class="card">${f.tipo} R$ ${f.valor}<br>${f.descricao}<br>${f.status}</div>`;
+if(f.tipo==="Entrada"&&f.status==="Pago")entrada+=f.valor;
+if(f.tipo==="Saída"&&f.status==="Pago")saida+=f.valor;
+});
+let saldoFinal=entrada-saida;
+saldo.innerHTML=`💰 ${saldoFinal.toFixed(2)}<br>📈 ${entrada}<br>📉 ${saida}`;
+});
 }
 
-// ================= LOAD =================
-function carregarTudo(){
-  carregarClientes();
-  carregarRastreadores();
-  carregarFinanceiro();
-  carregarEstoque();
-  carregarLinks();
+function carregarTudo(){carregarClientes();carregarFinanceiro();}
 
-  gerarDespesasFixas();
-  gerarCobrancas(); // 🔥 automático
-}
+function del(col,id){db.collection(col).doc(id).delete();}
 
-// ================= NAV =================
-function mostrar(sec){
-document.querySelectorAll('.main > div').forEach(d=>d.style.display='none');
-document.getElementById(sec).style.display='block';
-}
+function mostrar(sec){document.querySelectorAll('.container > div').forEach(d=>d.style.display='none');document.getElementById(sec).style.display='block'}
 </script>
+
+</body>
+</html>
