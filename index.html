@@ -410,20 +410,22 @@ ${r.imei} - ${r.status}
 // FINANCEIRO
 let editFinanceiroId = null;
 
-function addFinanceiro(){
+function editarFinanceiro(id){
+  db.collection("financeiro").doc(id).get().then(doc=>{
+    let f = doc.data();
 
-  let dataObj = {
-    userId,
-    valor: Number(valor.value),
-    tipo: tipo.value,
-    descricao: descricao.value,
-    data: data.value || new Date().toISOString().split("T")[0],
-    status: status.value,
-    categoria: categoria.value,
-    fixo: fixo.value
-  };
+    valor.value = f.valor;
+    tipo.value = f.tipo;
+    descricao.value = f.descricao;
+    data.value = f.data;
+    status.value = f.status;
+    categoria.value = f.categoria;
+    fixo.value = f.fixo;
 
-  if(editFinanceiroId){
+    editFinanceiroId = id;
+  });
+}
+  {
     db.collection("financeiro").doc(editFinanceiroId).update(dataObj);
     editFinanceiroId = null;
   } else {
