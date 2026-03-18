@@ -147,15 +147,38 @@ a {
 <!-- CLIENTES -->
 <div id="clientes" style="display:none;">
 <h2>Clientes</h2>
+
 <div class="card">
 <input id="nome" placeholder="Nome">
 <input id="telefone" placeholder="Telefone">
+<input id="endereco" placeholder="Endereço">
 <input id="mensalidade" placeholder="Mensalidade">
-<button class="action" onclick="addCliente()">Salvar</button>
+<input id="qtdVeiculos" placeholder="Quantidade de veículos">
+<input id="placas" placeholder="Placas (separadas por vírgula)">
+<input id="contrato" placeholder="Link do contrato">
+
+<button class="action" onclick="salvarCliente()">Salvar</button>
 </div>
+
 <div id="listaClientes"></div>
 </div>
 
+function editarCliente(id){
+  db.collection("clientes").doc(id).get().then(doc=>{
+    let c = doc.data();
+
+    nome.value = c.nome;
+    telefone.value = c.telefone;
+    endereco.value = c.endereco;
+    mensalidade.value = c.mensalidade;
+    qtdVeiculos.value = c.qtdVeiculos;
+    placas.value = c.placas ? c.placas.join(", ") : "";
+    contrato.value = c.contrato;
+
+    editId = id;
+  });
+}
+  
 <!-- RASTREADORES -->
 <div id="rastreadores" style="display:none;">
 <h2>Rastreadores</h2>
@@ -250,28 +273,67 @@ app.style.display="none";
 function del(col,id){ db.collection(col).doc(id).delete(); }
 
 // CLIENTES
-function addCliente(){
-db.collection("clientes").add({ userId, nome:nome.value, telefone:telefone.value, mensalidade:Number(mensalidade.value) });
+let editId = null;
+
+function salvarCliente(){
+
+  let data = {
+    userId,
+    nome: nome.value,
+    telefone: telefone.value,
+    endereco: endereco.value,
+    mensalidade: Number(mensalidade.value),
+    qtdVeiculos: Number(qtdVeiculos.value),
+    placas: placas.value.split(",").map(p => p.trim()),
+    contrato: contrato.value
+  };
+
+  if(editId){
+    db.collection("clientes").doc(editId).update(data);
+    editId = null;
+  } else {
+    db.collection("clientes").add(data);
+  }
+
+  limparCampos();
 }
 
+function limparCampos(){
+  nome.value="";
+  telefone.value="";
+  endereco.value="";
+  mensalidade.value="";
+  qtdVeiculos.value="";
+  placas.value="";
+  contrato.value="";
+}
 function carregarClientes(){
-db.collection("clientes").where("userId","==",userId).onSnapshot(snap=>{
-listaClientes.innerHTML="";
-totalClientes.innerHTML="👥 "+snap.size+" Clientes";
+  db.collection("clientes").where("userId","==",userId)
+  .onSnapshot(snap=>{
 
-snap.forEach(doc=>{
-let c=doc.data();
-listaClientes.innerHTML+=`
-<div class="card">
-<b>${c.nome}</b><br>
-📞 ${c.telefone}<br>
-💰 R$ ${c.mensalidade}
-<button class="delete" onclick="del('clientes','${doc.id}')">Excluir</button>
-</div>`;
-});
-});
+    listaClientes.innerHTML="";
+    totalClientes.innerHTML = "👥 " + snap.size + " Clientes";
+
+    snap.forEach(doc=>{
+      let c = doc.data();
+
+      listaClientes.innerHTML += `
+        <div class="card">
+          <b>${c.nome}</b><br>
+          📞 ${c.telefone}<br>
+          📍 ${c.endereco || "-"}<br>
+          🚗 ${c.qtdVeiculos || 0} veículos<br>
+          🔢 ${c.placas ? c.placas.join(", ") : "-"}<br>
+          💰 R$ ${c.mensalidade}<br>
+          📄 <a href="${c.contrato}" target="_blank">Contrato</a><br><br>
+
+          <button onclick="editarCliente('${doc.id}')">Editar</button>
+          <button class="delete" onclick="del('clientes','${doc.id}')">Excluir</button>
+        </div>
+      `;
+    });
+  });
 }
-
 // RASTREADORES
 function addRastreador(){
 db.collection("rastreadores").add({ userId, imei:imei.value, modelo:modelo.value, status:statusR.value });
