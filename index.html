@@ -378,18 +378,30 @@ ${r.imei} - ${r.status}
 }
 
 // FINANCEIRO
-function addFinanceiro(){
-  db.collection("financeiro").add({
-    userId,
-    valor: Number(valor.value),
-    tipo: tipo.value,
-    descricao: descricao.value,
-    data: data.value,
-    status: status.value,
-    categoria: categoria.value,
-    fixo: fixo.value
+let editFinanceiroId = null;
+
+function editarFinanceiro(id){
+  db.collection("financeiro").doc(id).get().then(doc=>{
+    let f = doc.data();
+
+    valor.value = f.valor;
+    tipo.value = f.tipo;
+    descricao.value = f.descricao;
+    data.value = f.data;
+    status.value = f.status;
+    categoria.value = f.categoria;
+    fixo.value = f.fixo;
+
+    editFinanceiroId = id;
   });
 }
+
+  function limparFinanceiro(){
+  valor.value = "";
+  descricao.value = "";
+  data.value = "";
+}
+  
 function carregarFinanceiro(){
   db.collection("financeiro").where("userId","==",userId)
   .onSnapshot(snap=>{
@@ -413,6 +425,7 @@ function carregarFinanceiro(){
           <button onclick="marcarPago('${doc.id}')">Marcar como Pago</button>
           <button class="delete" onclick="del('financeiro','${doc.id}')">Excluir</button>
         </div>
+        <button onclick="editarFinanceiro('${doc.id}')">Editar</button>
       `;
 
       if(f.tipo === "Entrada" && f.status === "Pago"){
@@ -426,11 +439,17 @@ function carregarFinanceiro(){
 
     let saldoFinal = entrada - saida;
 
-    saldo.innerHTML = `
-      💰 Caixa: R$ ${saldoFinal.toFixed(2)} <br>
-      📈 Entradas: R$ ${entrada.toFixed(2)} <br>
-      📉 Saídas: R$ ${saida.toFixed(2)}
-    `;
+    let reinvestimento = saldoFinal * 0.4;
+let retirada = saldoFinal * 0.6;
+
+saldo.innerHTML = `
+  💰 Caixa: R$ ${saldoFinal.toFixed(2)} <br>
+  📈 Entradas: R$ ${entrada.toFixed(2)} <br>
+  📉 Saídas: R$ ${saida.toFixed(2)} <br><br>
+
+  🔁 Reinvestir: R$ ${reinvestimento.toFixed(2)} <br>
+  💵 Pode retirar: R$ ${retirada.toFixed(2)}
+`;
   });
 } 
 
@@ -442,7 +461,12 @@ function carregarFinanceiro(){
   
 // ESTOQUE
 function addEstoque(){
-db.collection("estoque").add({ userId, produto:produto.value, quantidade:Number(quantidade.value) });
+db.collection("estoque").add({
+  userId,
+  produto: produto.value,
+  quantidade: Number(quantidade.value),
+  custo: Number(custo.value)
+});
 }
 
 function carregarEstoque(){
