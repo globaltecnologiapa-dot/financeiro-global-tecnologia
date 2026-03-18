@@ -4,8 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Global Rastreamento PRO UX</title>
-<!-- FAVICON -->
-<link rel="icon" href="https://globaltecnologiapa-dot.github.io/crm.globalrastreamento/favicon.ico" type="image/x-icon">
+
+<!-- FAVICON (EMBUTIDO - SEM ERRO) -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<rect width='100' height='100' rx='20' fill='%230f172a'/>
+<text x='50%' y='55%' font-size='50' text-anchor='middle' fill='%23facc15' dy='.3em'>G</text>
+</svg>">
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -15,26 +20,25 @@
 <style>
 body{margin:0;font-family:Arial;background:#0f172a;color:#fff}
 .container{display:flex;min-height:100vh}
-.sidebar{width:260px;background:#111827;height:100vh;padding:20px;box-shadow:2px 0 5px rgba(0,0,0,0.3)}
-.sidebar h3{color:#fff;margin-bottom:20px;text-align:center}
-.sidebar button{width:100%;margin:8px 0;padding:12px;background:#1f2937;border:none;color:#fff;border-radius:8px;font-weight:600;cursor:pointer;transition:0.2s}
+.sidebar{width:260px;background:#111827;padding:20px}
+.sidebar h3{text-align:center}
+.sidebar button{width:100%;margin:6px 0;padding:12px;background:#1f2937;border:none;color:#fff;border-radius:8px;cursor:pointer}
 .sidebar button:hover{background:#22c55e;color:#000}
-.main{flex:1;padding:25px;overflow:auto}
-.card{background:#1e293b;padding:15px;border-radius:12px;margin-bottom:15px;box-shadow:0 2px 6px rgba(0,0,0,0.5)}
-input,select{width:100%;padding:10px;margin:6px 0;border-radius:6px;border:none;background:#0f172a;color:#fff}
-input::placeholder{color:#9ca3af}
-button{margin-top:6px;padding:10px;border:none;border-radius:6px;cursor:pointer;font-weight:600}
-.delete{background:#ef4444;color:#fff}
+.main{flex:1;padding:20px}
+.card{background:#1e293b;padding:15px;border-radius:12px;margin-bottom:10px}
+input,select{width:100%;padding:10px;margin:5px 0;border:none;border-radius:6px;background:#0f172a;color:#fff}
+button{padding:10px;border:none;border-radius:6px;margin-top:5px;cursor:pointer}
+.delete{background:#ef4444}
 .edit{background:#22c55e;color:#000}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-#graficoContainer{width:100%;height:300px;margin-top:20px;border-radius:12px;background:#1e293b;padding:10px;box-shadow:0 2px 6px rgba(0,0,0,0.5)}
-#grafico{width:100%;height:100%}
+.abrir{background:#3b82f6;color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
 </style>
 </head>
+
 <body>
 
 <!-- LOGIN -->
-<div id="loginDiv" style="padding:20px">
+<div id="loginDiv">
 <h2>Login</h2>
 <input id="email" placeholder="Email">
 <input id="senha" type="password" placeholder="Senha">
@@ -45,6 +49,7 @@ button{margin-top:6px;padding:10px;border:none;border-radius:6px;cursor:pointer;
 <!-- APP -->
 <div id="app" style="display:none;">
 <div class="container">
+
 <div class="sidebar">
 <h3>Global Rastreamento</h3>
 <button onclick="mostrar('dashboard')">Dashboard</button>
@@ -63,54 +68,26 @@ button{margin-top:6px;padding:10px;border:none;border-radius:6px;cursor:pointer;
 <div id="dashboard">
 <h2>Dashboard</h2>
 <div class="grid">
-<div class="card" id="totalClientes">Clientes</div>
-<div class="card" id="totalRastreadores">Rastreadores</div>
-<div class="card" id="saldo">Saldo</div>
+<div class="card" id="totalClientes"></div>
+<div class="card" id="totalRastreadores"></div>
+<div class="card" id="saldo"></div>
 </div>
-<div id="graficoContainer">
 <canvas id="grafico"></canvas>
 </div>
-</div>
 
-<!-- OUTROS MÓDULOS -->
+<!-- CLIENTES -->
 <div id="clientes" style="display:none">
 <h2>Clientes</h2>
 <input id="nome" placeholder="Nome">
 <input id="telefone" placeholder="Telefone">
 <input id="endereco" placeholder="Endereço">
 <input id="mensalidade" placeholder="Mensalidade">
-<input id="placas" placeholder="Placas (separadas por vírgula)">
+<input id="placas" placeholder="Placas">
 <button onclick="salvarCliente()">Salvar</button>
 <div id="listaClientes"></div>
 </div>
 
-<div id="rastreadores" style="display:none">
-<h2>Rastreadores</h2>
-<input id="imei" placeholder="IMEI">
-<input id="modelo" placeholder="Modelo">
-<select id="statusR"><option>Ativo</option><option>Inativo</option></select>
-<button onclick="salvarRastreador()">Salvar</button>
-<div id="listaRastreadores"></div>
-</div>
-
-<div id="financeiro" style="display:none">
-<h2>Financeiro</h2>
-<input id="valor" placeholder="Valor">
-<select id="tipo"><option>Entrada</option><option>Saída</option></select>
-<input id="descricao" placeholder="Descrição">
-<select id="status"><option>Pendente</option><option>Pago</option></select>
-<button onclick="salvarFinanceiro()">Salvar</button>
-<div id="listaFinanceiro"></div>
-</div>
-
-<div id="estoque" style="display:none">
-<h2>Estoque</h2>
-<input id="produto" placeholder="Produto">
-<input id="quantidade" placeholder="Qtd">
-<button onclick="salvarEstoque()">Salvar</button>
-<div id="listaEstoque"></div>
-</div>
-
+<!-- LINKS -->
 <div id="links" style="display:none">
 <h2>Links</h2>
 <input id="nomeLink" placeholder="Nome">
@@ -119,140 +96,156 @@ button{margin-top:6px;padding:10px;border:none;border-radius:6px;cursor:pointer;
 <div id="listaLinks"></div>
 </div>
 
-<div id="relatorios" style="display:none">
-<h2>Relatórios</h2>
-<div id="relatorioConteudo"></div>
-</div>
-
 </div>
 </div>
 </div>
 
 <script>
-// FIREBASE
-const firebaseConfig={apiKey:"AIzaSyApCbQJCUQSwP0g6vSBqwrIMSK7n-w9ILc",authDomain:"global-tecnologia-kanban.firebaseapp.com",projectId:"global-tecnologia-kanban"};
+const firebaseConfig={
+apiKey:"SUA_API",
+authDomain:"global-tecnologia-kanban.firebaseapp.com",
+projectId:"global-tecnologia-kanban"
+};
 firebase.initializeApp(firebaseConfig);
+
 const auth=firebase.auth();
 const db=firebase.firestore();
-let userId,editId=null,editCol=null;
+let userId;
 
 // LOGIN
-function login(){auth.signInWithEmailAndPassword(email.value,senha.value);}
-function registrar(){auth.createUserWithEmailAndPassword(email.value,senha.value);}
+function login(){
+auth.signInWithEmailAndPassword(email.value,senha.value)
+.catch(e=>alert(e.message));
+}
+
+function registrar(){
+auth.createUserWithEmailAndPassword(email.value,senha.value)
+.catch(e=>alert(e.message));
+}
+
 function logout(){auth.signOut();}
 
+// AUTH
 auth.onAuthStateChanged(user=>{
-if(user){userId=user.uid;loginDiv.style.display="none";app.style.display="block";carregarTudo();}
-else{loginDiv.style.display="block";app.style.display="none";}
-});
-
-// SALVAR / EDITAR
-function salvar(col,data){
-if(editId && editCol===col){db.collection(col).doc(editId).update(data);editId=null;editCol=null;}
-else{db.collection(col).add(data);}
+if(user){
+userId=user.uid;
+loginDiv.style.display="none";
+app.style.display="block";
 carregarTudo();
+}else{
+loginDiv.style.display="block";
+app.style.display="none";
 }
-function editar(col,id){
-db.collection(col).doc(id).get().then(doc=>{
-let d=doc.data();
-editId=id;editCol=col;
-Object.keys(d).forEach(k=>{if(document.getElementById(k))document.getElementById(k).value=d[k]});
 });
+
+// SALVAR
+function salvar(col,data){
+db.collection(col).add(data).then(carregarTudo);
 }
-function del(col,id){db.collection(col).doc(id).delete();carregarTudo();}
 
-// ABAS
-function salvarCliente(){salvar("clientes",{userId,nome:nome.value,telefone:telefone.value,endereco:endereco.value,mensalidade:Number(mensalidade.value)||0,placas:placas.value.split(",").map(p=>p.trim())});}
-function salvarRastreador(){salvar("rastreadores",{userId,imei:imei.value,modelo:modelo.value,status:statusR.value});}
-function salvarFinanceiro(){salvar("financeiro",{userId,valor:Number(valor.value)||0,tipo:tipo.value,descricao:descricao.value,status:status.value});}
-function salvarEstoque(){salvar("estoque",{userId,produto:produto.value,quantidade:Number(quantidade.value)||0});}
-function salvarLink(){salvar("links",{userId,nome:nomeLink.value,url:urlLink.value});}
+// CLIENTE
+function salvarCliente(){
+salvar("clientes",{userId,nome:nome.value,telefone:telefone.value,endereco:endereco.value,mensalidade:Number(mensalidade.value)||0,placas:placas.value});
+}
 
-// RENDER
+// LINK
+function salvarLink(){
+salvar("links",{userId,nome:nomeLink.value,url:urlLink.value});
+}
+
+// RENDER (SEM UID)
 function render(col,lista){
 db.collection(col).where("userId","==",userId).onSnapshot(snap=>{
 lista.innerHTML="";
 snap.forEach(doc=>{
 let d=doc.data();
+
 let valores = Object.entries(d)
-  .filter(([k]) => k !== "userId")
-  .map(([k,v]) => `${v}`)
-  .join(" | ");
-lista.innerHTML+=`<div class='card'>${valores}<br>
-<button class='edit' onclick="editar('${col}','${doc.id}')">Editar</button>
+.filter(([k])=>k!=="userId")
+.map(([k,v])=>v)
+.join(" | ");
+
+let botoes="";
+
+if(col==="links"){
+botoes+=`<button class='abrir' onclick="window.open('${d.url}','_blank')">Abrir</button>`;
+}
+
+lista.innerHTML+=`
+<div class='card'>
+${valores}<br>
+${botoes}
 <button class='delete' onclick="del('${col}','${doc.id}')">Excluir</button>
 </div>`;
 });
 });
 }
 
-// DASHBOARD + GRÁFICO
+// DELETE
+function del(col,id){
+db.collection(col).doc(id).delete();
+}
+
+// DASHBOARD
 function carregarDashboard(){
 let entrada=0,saida=0;
-db.collection("clientes").where("userId","==",userId).get().then(s=>totalClientes.innerHTML="Clientes: "+s.size);
-db.collection("rastreadores").where("userId","==",userId).get().then(s=>totalRastreadores.innerHTML="Rastreadores: "+s.size);
-db.collection("financeiro").where("userId","==",userId).get().then(snap=>{
+
+db.collection("clientes").where("userId","==",userId).get()
+.then(s=>totalClientes.innerHTML="Clientes: "+s.size);
+
+db.collection("rastreadores").where("userId","==",userId).get()
+.then(s=>totalRastreadores.innerHTML="Rastreadores: "+s.size);
+
+db.collection("financeiro").where("userId","==",userId).get()
+.then(snap=>{
 snap.forEach(doc=>{
 let f=doc.data();
-if(f.tipo==="Entrada"&&f.status==="Pago")entrada+=f.valor;
-if(f.tipo==="Saída"&&f.status==="Pago")saida+=f.valor;
+if(f.tipo==="Entrada")entrada+=f.valor;
+if(f.tipo==="Saída")saida+=f.valor;
 });
+
 let saldoFinal=entrada-saida;
-saldo.innerHTML=`💰 Saldo Total: ${saldoFinal.toFixed(2)}<br>Entrada: ${entrada}<br>Saída: ${saida}<br>💼 Retirada (Salário) = ${(entrada-saida)*0.6}`;
+
+saldo.innerHTML=`
+💰 Saldo: ${saldoFinal.toFixed(2)}<br>
+Entrada: ${entrada}<br>
+Saída: ${saida}
+`;
+
 graficoDashboard(saldoFinal,entrada,saida);
 });
 }
 
-// GRÁFICO
+// GRÁFICO CORRIGIDO
 function graficoDashboard(saldoFinal,entrada,saida){
-const canvas=document.getElementById('grafico');
-canvas.height=300; // garante altura no GitHub Pages
-const ctx=canvas.getContext('2d');
+const ctx=document.getElementById('grafico');
+
 if(window.grafico)window.grafico.destroy();
+
 window.grafico=new Chart(ctx,{
-type:'bar',
+type:'doughnut',
 data:{
-labels:['Saldo Total','Reinvestimento (40%)','Retirada/Salário (60%)'],
+labels:['Entrada','Saída','Lucro'],
 datasets:[{
-label:'R$',
-data:[saldoFinal,entrada*0.4,(entrada-saida)*0.6],
-backgroundColor:['#22c55e','#3b82f6','#f59e0b']
+data:[entrada,saida,saldoFinal]
 }]
-},
-options:{
-responsive:true,
-maintainAspectRatio:false,
-plugins:{legend:{display:false}},
-scales:{y:{beginAtZero:true}}
 }
 });
 }
 
-// RELATÓRIOS
-function carregarRelatorios(){
-db.collection("financeiro").where("userId","==",userId).get().then(snap=>{
-let html="";
-snap.forEach(doc=>{
-let f=doc.data();
-html+=`<div>${f.tipo} - R$ ${f.valor} - ${f.status}</div>`;
-});
-relatorioConteudo.innerHTML=html;
-});
-}
-
-// CARREGAR TUDO
+// CARREGAR
 function carregarTudo(){
 render("clientes",listaClientes);
-render("rastreadores",listaRastreadores);
-render("financeiro",listaFinanceiro);
-render("estoque",listaEstoque);
 render("links",listaLinks);
 carregarDashboard();
-carregarRelatorios();
 }
 
 // NAVEGAÇÃO
-function mostrar(id){document.querySelectorAll('.main>div').forEach(d=>d.style.display='none');document.getElementById(id).style.display='block'}
+function mostrar(id){
+document.querySelectorAll('.main>div').forEach(d=>d.style.display='none');
+document.getElementById(id).style.display='block';
+}
 </script>
+
 </body>
 </html>
