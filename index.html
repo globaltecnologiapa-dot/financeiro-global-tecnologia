@@ -74,6 +74,7 @@ input,select{width:100%;padding:8px;margin:5px 0;background:#020617;color:#fff;b
 <h2>Lançamentos</h2>
 
 <input id="valor" placeholder="Valor">
+
 <select id="tipo">
 <option>Entrada</option>
 <option>Saída</option>
@@ -95,7 +96,17 @@ input,select{width:100%;padding:8px;margin:5px 0;background:#020617;color:#fff;b
 <option value="contador">Contador</option>
 <option value="outros">Outros</option>
 </select>
-  <button onclick="salvarFinanceiro()">Salvar</button>
+
+<input id="descricao" placeholder="Descrição (opcional)">
+
+<select id="status">
+<option>Pago</option>
+<option>Pendente</option>
+</select>
+
+<button onclick="salvarFinanceiro()">Salvar</button>
+
+<hr>
 
 <div id="listaFinanceiro"></div>
 </div>
@@ -246,21 +257,36 @@ datasets:[{data:[e,s,sa,i]}]
 }
 
 // RENDER FINANCEIRO
+let unsubscribeFinanceiro;
+
 function renderFinanceiro(){
-db.collection("financeiro").where("userId","==",userId)
+
+if(unsubscribeFinanceiro) unsubscribeFinanceiro();
+
+unsubscribeFinanceiro = db.collection("financeiro")
+.where("userId","==",userId)
+.orderBy("data","desc")
 .onSnapshot(snap=>{
+
 listaFinanceiro.innerHTML="";
+
 snap.forEach(doc=>{
 let f=doc.data();
+
 listaFinanceiro.innerHTML+=`
 <div class="card">
-${f.tipo} - ${f.valor} (${f.origem})<br>
-${f.descricao||""}
+<strong>${f.tipo}</strong> - R$ ${f.valor} <br>
+📂 ${f.origem} <br>
+📝 ${f.descricao || "-"} <br>
+
+<button onclick="excluirLancamento('${doc.id}')" style="background:#ef4444;color:#fff;margin-top:5px;">
+Excluir
+</button>
 </div>`;
 });
+
 });
 }
-
 // LINKS
 function salvarLink(){
 db.collection("links").add({
