@@ -3,14 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Financeiro Bank PRO</title>
-
-<!-- FAVICON -->
-<link rel="icon" href="data:image/svg+xml,
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
-<circle cx='50' cy='50' r='40' fill='%23ef4444'/>
-<circle cx='50' cy='50' r='15' fill='white'/>
-</svg>">
+<title>Financeiro Empresarial PRO</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -21,14 +14,43 @@
 body{margin:0;font-family:Arial;background:#0f172a;color:#fff}
 .container{display:flex}
 .sidebar{width:230px;background:#111827;padding:20px}
-.sidebar button{width:100%;margin:5px 0;padding:10px;border:none;background:#1f2937;color:#fff;border-radius:6px}
+.sidebar button{width:100%;margin:5px 0;padding:10px;border:none;background:#1f2937;color:#fff;border-radius:6px;cursor:pointer}
 .main{flex:1;padding:20px}
-.card{background:#1e293b;padding:15px;margin:10px 0;border-radius:12px}
-input,select{width:100%;padding:8px;margin:5px 0;background:#020617;color:#fff;border:none;border-radius:6px}
-#loginDiv{display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column}
-.light{background:#f1f5f9;color:#000}
-.light .card{background:#fff;color:#000}
-.light .sidebar{background:#e2e8f0}
+
+.card{
+background:#1e293b;
+padding:15px;
+margin:10px 0;
+border-radius:12px;
+transition:0.3s;
+}
+.card:hover{transform:translateY(-3px)}
+
+input,select{
+width:100%;
+padding:10px;
+margin:5px 0;
+background:#020617;
+color:#fff;
+border:none;
+border-radius:6px
+}
+
+.btn{padding:8px;border:none;border-radius:6px;margin-top:5px;cursor:pointer}
+.btn-editar{background:#3b82f6;color:#fff}
+.btn-excluir{background:#ef4444;color:#fff}
+
+.toast{
+position:fixed;
+bottom:20px;
+right:20px;
+background:#22c55e;
+padding:10px;
+border-radius:6px;
+opacity:0;
+transition:0.3s;
+}
+.toast.show{opacity:1}
 </style>
 </head>
 
@@ -36,7 +58,7 @@ input,select{width:100%;padding:8px;margin:5px 0;background:#020617;color:#fff;b
 
 <div id="loginDiv">
 <h2>Login</h2>
-<input id="email" placeholder="Email">
+<input id="email">
 <input id="senha" type="password">
 <button onclick="login()">Entrar</button>
 </div>
@@ -47,34 +69,24 @@ input,select{width:100%;padding:8px;margin:5px 0;background:#020617;color:#fff;b
 <div class="sidebar">
 <button onclick="mostrar('dashboard')">Dashboard</button>
 <button onclick="mostrar('financeiro')">Financeiro</button>
-<button onclick="mostrar('links')">Links</button>
-<button onclick="toggleTema()">Tema</button>
+<button onclick="mostrar('contas')">Contas</button>
+<button onclick="mostrar('estoque')">Estoque</button>
+<button onclick="mostrar('usuarios')">Usuários</button>
 <button onclick="logout()">Sair</button>
 </div>
 
 <div class="main">
 
-<!-- DASHBOARD -->
 <div id="dashboard">
 <h2>Dashboard</h2>
-<div id="dataHora"></div>
-
-<select id="mesSelecionado" onchange="carregarDashboard()"></select>
-
 <div id="saldo"></div>
-
 <canvas id="grafico"></canvas>
-
-<h3>Links rápidos</h3>
-<div id="linksDashboard"></div>
 </div>
 
-<!-- FINANCEIRO -->
 <div id="financeiro" style="display:none">
 <h2>Lançamentos</h2>
 
 <input id="valor" placeholder="Valor">
-
 <select id="tipo">
 <option>Entrada</option>
 <option>Saída</option>
@@ -83,22 +95,10 @@ input,select{width:100%;padding:8px;margin:5px 0;background:#020617;color:#fff;b
 <select id="origem">
 <option value="salario">Salário</option>
 <option value="reinvestimento">Reinvestimento</option>
-<option value="imposto">Imposto</option>
-<option value="servidor">Servidor</option>
-<option value="manutencao">Manutenção</option>
-<option value="chip">Compra de Chip</option>
-<option value="rastreador">Compra de Rastreador</option>
-<option value="internet">Internet</option>
-<option value="energia">Energia</option>
-<option value="telefone">Telefone</option>
-<option value="agua">Água</option>
-<option value="escritorio">Material Escritório</option>
-<option value="contador">Contador</option>
 <option value="outros">Outros</option>
 </select>
 
-<input id="descricao" placeholder="Descrição (opcional)">
-
+<input id="descricao" placeholder="Descrição">
 <select id="status">
 <option>Pago</option>
 <option>Pendente</option>
@@ -106,375 +106,209 @@ input,select{width:100%;padding:8px;margin:5px 0;background:#020617;color:#fff;b
 
 <button onclick="salvarFinanceiro()">Salvar</button>
 
-<hr>
+<select id="filtroTipo" onchange="renderFinanceiro()">
+<option value="todos">Todos</option>
+<option value="Entrada">Entrada</option>
+<option value="Saída">Saída</option>
+</select>
+
+<input id="busca" placeholder="Buscar" onkeyup="renderFinanceiro()">
 
 <div id="listaFinanceiro"></div>
 </div>
-<!-- LINKS -->
-<div id="links" style="display:none">
-<h2>Links</h2>
-<input id="nomeLink" placeholder="Nome">
-<input id="urlLink" placeholder="URL">
-<button onclick="salvarLink()">Salvar</button>
-<div id="listaLinks"></div>
+
+<div id="contas" style="display:none">
+<h2>Contas</h2>
+<input id="nomeConta">
+<input id="valorConta">
+<select id="tipoConta">
+<option value="pagar">Pagar</option>
+<option value="receber">Receber</option>
+</select>
+<input type="date" id="dataConta">
+<button onclick="salvarConta()">Salvar</button>
+<div id="listaContas"></div>
+</div>
+
+<div id="estoque" style="display:none">
+<h2>Estoque</h2>
+<input id="produto">
+<input id="quantidade">
+<button onclick="salvarProduto()">Salvar</button>
+<div id="listaEstoque"></div>
+</div>
+
+<div id="usuarios" style="display:none">
+<h2>Usuários</h2>
+<input id="novoEmail">
+<button onclick="addUser()">Adicionar</button>
+<div id="listaUsuarios"></div>
 </div>
 
 </div>
 </div>
 </div>
+
+<div id="toast" class="toast"></div>
 
 <script>
+
+// FIREBASE
 const firebaseConfig={
 apiKey:"AIzaSyApCbQJCUQSwP0g6vSBqwrIMSK7n-w9ILc",
 authDomain:"global-tecnologia-kanban.firebaseapp.com",
 projectId:"global-tecnologia-kanban"
 };
+
 firebase.initializeApp(firebaseConfig);
 
 const auth=firebase.auth();
 const db=firebase.firestore();
-let userId;
-let unsubscribeFinanceiro;
+
+let userId,empresaId;
 
 // LOGIN
 function login(){auth.signInWithEmailAndPassword(email.value,senha.value)}
 function logout(){auth.signOut()}
 
-auth.onAuthStateChanged(user=>{
+auth.onAuthStateChanged(async user=>{
 if(user){
+
 userId=user.uid;
+
+let doc=await db.collection("usuarios").doc(userId).get();
+
+if(!doc.exists){
+let empresa=await db.collection("empresas").add({nome:"Empresa",dono:userId});
+
+await db.collection("usuarios").doc(userId).set({
+empresaId:empresa.id,
+tipo:"admin"
+});
+}
+
+let dados=(await db.collection("usuarios").doc(userId).get()).data();
+empresaId=dados.empresaId;
+
 loginDiv.style.display="none";
 app.style.display="block";
+
 init();
+
 }else{
 loginDiv.style.display="block";
 app.style.display="none";
 }
 });
 
-// SALVAR FINANCEIRO
+// TOAST
+function toast(msg){
+let t=document.getElementById("toast");
+t.innerText=msg;
+t.classList.add("show");
+setTimeout(()=>t.classList.remove("show"),2000);
+}
+
+// FINANCEIRO
 function salvarFinanceiro(){
 
-const valorInput = document.getElementById("valor");
-const tipoInput = document.getElementById("tipo");
-const origemInput = document.getElementById("origem");
-const descricaoInput = document.getElementById("descricao");
-const statusInput = document.getElementById("status");
+let v=parseFloat(valor.value);
 
-let valorFinal = parseFloat(valorInput.value.replace(",", "."));
+let sal=0,inv=0;
 
-if(isNaN(valorFinal) || valorFinal <= 0){
-alert("Digite um valor válido");
-return;
+if(tipo.value==="Entrada"){
+sal=v*0.6;
+inv=v*0.4;
 }
 
-let salario = 0;
-let investimento = 0;
-
-if(tipoInput.value === "Entrada"){
-salario = valorFinal * 0.6;
-investimento = valorFinal * 0.4;
+db.collection("empresas").doc(empresaId).collection("financeiro").add({
+valor:v,
+tipo:tipo.value,
+origem:origem.value,
+descricao:descricao.value,
+status:status.value,
+salario:sal,
+investimento:inv,
+data:new Date().toISOString()
+}).then(()=>{toast("Salvo")});
 }
 
-db.collection("financeiro").add({
-userId,
-valor: valorFinal,
-tipo: tipoInput.value,
-origem: tipoInput.value==="Entrada" ? "entrada" : origemInput.value,
-descricao: descricaoInput.value || "",
-status: statusInput.value,
-salario: salario,
-investimento: investimento,
-data: new Date().toISOString()
-})
-.then(()=>{
-valorInput.value="";
-descricaoInput.value="";
-carregarDashboard();
-})
-.catch(e=>{
-alert("Erro ao salvar: "+e.message);
-});
-}
-  function editarLancamento(id, valor, tipo, origem, descricao, status){
-
-// pega os inputs
-const valorInput = document.getElementById("valor");
-const tipoInput = document.getElementById("tipo");
-const origemInput = document.getElementById("origem");
-const descricaoInput = document.getElementById("descricao");
-const statusInput = document.getElementById("status");
-
-// preenche os campos
-valorInput.value = valor;
-tipoInput.value = tipo;
-origemInput.value = origem;
-descricaoInput.value = descricao;
-statusInput.value = status;
-
-// botão salvar
-const btnSalvar = document.querySelector("#financeiro button");
-
-btnSalvar.innerText = "Atualizar";
-
-// troca ação do botão
-btnSalvar.onclick = function(){
-
-let novoValor = parseFloat(valorInput.value.replace(",", "."));
-
-// validação
-if(isNaN(novoValor) || novoValor <= 0){
-alert("Digite um valor válido");
-return;
-}
-
-// regra 60/40
-let salario = 0;
-let investimento = 0;
-
-if(tipoInput.value === "Entrada"){
-salario = novoValor * 0.6;
-investimento = novoValor * 0.4;
-}
-
-// atualiza no firebase
-db.collection("financeiro").doc(id).update({
-valor: novoValor,
-tipo: tipoInput.value,
-origem: tipoInput.value==="Entrada" ? "entrada" : origemInput.value,
-descricao: descricaoInput.value || "",
-status: statusInput.value,
-salario: salario,
-investimento: investimento
-})
-.then(()=>{
-
-// volta botão ao normal
-btnSalvar.innerText = "Salvar";
-btnSalvar.onclick = salvarFinanceiro;
-
-// limpa campos
-valorInput.value = "";
-descricaoInput.value = "";
-
-// atualiza tela
-carregarDashboard();
-})
-.catch(e=>{
-alert("Erro ao atualizar: " + e.message);
-});
-
-};
-
-}
-// DASHBOARD
-function carregarDashboard(){
-
-let entrada=0,saida=0,saidaSal=0,saidaInv=0;
-
-let mes=Number(mesSelecionado.value);
-let ano=new Date().getFullYear();
-
-db.collection("financeiro").where("userId","==",userId).get()
-.then(snap=>{
-
-snap.forEach(doc=>{
-let f=doc.data();
-if(!f.data) return;
-
-let d=new Date(f.data);
-
-if(d.getMonth()==mes && d.getFullYear()==ano){
-
-if(f.status==="Pago"){
-
-if(f.tipo==="Entrada") entrada+=f.valor;
-
-if(f.tipo==="Saída"){
-saida+=f.valor;
-
-if(f.origem==="salario") saidaSal+=f.valor;
-if(f.origem==="reinvestimento") saidaInv+=f.valor;
-}
-
-}
-
-}
-
-});
-
-let salario=(entrada*0.6)-saidaSal;
-let investimento=(entrada*0.4)-saidaInv;
-let saldoTotal=entrada-saida;
-
-saldo.innerHTML=`
-💰 Entrada: ${entrada.toFixed(2)}<br>
-💸 Saída: ${saida.toFixed(2)}<br>
-📊 Saldo Total: ${saldoTotal.toFixed(2)}<br><br>
-
-💼 Salário disponível: ${salario.toFixed(2)}<br>
-🔁 Investimento disponível: ${investimento.toFixed(2)}
-`;
-
-grafico(entrada,saida,salario,investimento);
-
-});
-}
-
-// GRÁFICO
-function grafico(e,s,sa,i){
-const ctx=document.getElementById("grafico");
-
-if(window.grafico) window.grafico.destroy();
-
-window.grafico=new Chart(ctx,{
-type:'doughnut',
-data:{
-labels:['Entrada','Saída','Salário','Investimento'],
-datasets:[{data:[e,s,sa,i]}]
-}
-});
-}
-
-// RENDER FINANCEIRO
 function renderFinanceiro(){
 
-if(unsubscribeFinanceiro) unsubscribeFinanceiro();
-
-unsubscribeFinanceiro = db.collection("financeiro")
-.where("userId","==",userId)
-.orderBy("data","desc")
+db.collection("empresas").doc(empresaId).collection("financeiro")
 .onSnapshot(snap=>{
 
 listaFinanceiro.innerHTML="";
 
 snap.forEach(doc=>{
-let f = doc.data();
+let f=doc.data();
 
-// cria card
-let card = document.createElement("div");
-card.className = "card";
+let card=document.createElement("div");
+card.className="card";
 
-// conteúdo
-card.innerHTML = `
-<strong>${f.tipo}</strong> - R$ ${f.valor.toFixed(2)} <br>
-📂 ${f.origem} <br>
-📝 ${f.descricao || "-"} <br>
-
-${f.tipo === "Entrada" ? `
-💼 Salário: R$ ${(f.salario || 0).toFixed(2)} <br>
-🔁 Investimento: R$ ${(f.investimento || 0).toFixed(2)}
-` : ""}
-<br>
+card.innerHTML=`
+<strong>${f.tipo}</strong> - R$ ${f.valor}<br>
+${f.descricao || "-"}
 `;
 
-// botão editar
-let btnEditar = document.createElement("button");
-btnEditar.innerText = "Editar";
-btnEditar.style = "background:#3b82f6;color:#fff;margin-top:5px;";
+let e=document.createElement("button");
+e.innerText="✏️";
+e.className="btn btn-editar";
+e.onclick=()=>editar(doc.id,f);
 
-btnEditar.onclick = function(){
-editarLancamento(
-doc.id,
-f.valor,
-f.tipo,
-f.origem,
-f.descricao,
-f.status
-);
-};
-  function excluirLancamento(id){
-if(confirm("Deseja excluir este lançamento?")){
-db.collection("financeiro").doc(id).delete();
-}
-}
+let x=document.createElement("button");
+x.innerText="🗑️";
+x.className="btn btn-excluir";
+x.onclick=()=>excluir(doc.id);
 
-// botão excluir
-let btnExcluir = document.createElement("button");
-btnExcluir.innerText = "Excluir";
-btnExcluir.style = "background:#ef4444;color:#fff;margin-top:5px;";
+card.appendChild(e);
+card.appendChild(x);
 
-btnExcluir.onclick = function(){
-excluirLancamento(doc.id);
-};
-
-// adiciona botões
-card.appendChild(btnEditar);
-card.appendChild(btnExcluir);
-
-// adiciona na tela
 listaFinanceiro.appendChild(card);
-
-});
-
-});
-}
-// LINKS
-function salvarLink(){
-db.collection("links").add({
-userId,
-nome:nomeLink.value,
-url:urlLink.value
-}).then(renderLinks);
-}
-
-function renderLinks(){
-db.collection("links").where("userId","==",userId)
-.onSnapshot(snap=>{
-listaLinks.innerHTML="";
-linksDashboard.innerHTML="";
-
-snap.forEach(doc=>{
-let d=doc.data();
-let url=d.url.startsWith("http")?d.url:"https://"+d.url;
-
-listaLinks.innerHTML+=`
-<div class="card">
-${d.nome}
-<button onclick="window.open('${url}')">Abrir</button>
-</div>`;
-
-linksDashboard.innerHTML+=`
-<button onclick="window.open('${url}')">${d.nome}</button>`;
 });
 });
 }
 
-// DATA
-setInterval(()=>dataHora.innerHTML=new Date().toLocaleString("pt-BR"),1000);
-
-// TEMA
-function toggleTema(){
-document.body.classList.toggle("light");
-localStorage.setItem("tema",document.body.classList.contains("light"));
+function excluir(id){
+db.collection("empresas").doc(empresaId).collection("financeiro").doc(id).delete();
+toast("Excluído");
 }
 
-window.onload=()=>{
-if(localStorage.getItem("tema")=="true"){
-document.body.classList.add("light");
+// CONTAS
+function salvarConta(){
+db.collection("empresas").doc(empresaId).collection("contas").add({
+nome:nomeConta.value,
+valor:valorConta.value
+});
 }
+
+// ESTOQUE
+function salvarProduto(){
+db.collection("empresas").doc(empresaId).collection("estoque").add({
+nome:produto.value,
+quantidade:quantidade.value
+});
+}
+
+// USUÁRIOS
+function addUser(){
+db.collection("usuarios").add({
+email:novoEmail.value,
+empresaId:empresaId
+});
 }
 
 // INIT
 function init(){
-
-mesSelecionado.innerHTML="";
-for(let i=0;i<12;i++){
-mesSelecionado.innerHTML+=`<option value="${i}">${i+1}</option>`;
-}
-
-mesSelecionado.value=new Date().getMonth();
-
-carregarDashboard();
 renderFinanceiro();
-renderLinks();
 }
 
 // NAV
 function mostrar(id){
-document.querySelectorAll('.main>div').forEach(d=>d.style.display='none');
-document.getElementById(id).style.display='block';
+document.querySelectorAll(".main>div").forEach(d=>d.style.display="none");
+document.getElementById(id).style.display="block";
 }
+
 </script>
 
 </body>
