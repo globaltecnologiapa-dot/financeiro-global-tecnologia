@@ -140,20 +140,36 @@ app.style.display="none";
 // SALVAR FINANCEIRO
 function salvarFinanceiro(){
 
+const valorInput = document.getElementById("valor");
+const tipoInput = document.getElementById("tipo");
+const origemInput = document.getElementById("origem");
+const descricaoInput = document.getElementById("descricao");
+const statusInput = document.getElementById("status");
+
+let valorFinal = parseFloat(valorInput.value.replace(",", "."));
+
+if(isNaN(valorFinal) || valorFinal <= 0){
+alert("Digite um valor válido");
+return;
+}
+
 db.collection("financeiro").add({
 userId,
-valor:parseFloat(valor.value.replace(",", "."))||0,
-tipo:tipo.value,
-origem:tipo.value==="Entrada"?"geral":origem.value,
-descricao:descricao.value,
-status:status.value,
-data:new Date().toISOString()
+valor: valorFinal,
+tipo: tipoInput.value,
+origem: tipoInput.value==="Entrada" ? "geral" : origemInput.value,
+descricao: descricaoInput.value || "",
+status: statusInput.value,
+data: new Date().toISOString()
 })
 .then(()=>{
-valor.value="";
-descricao.value="";
+valorInput.value="";
+descricaoInput.value="";
 carregarDashboard();
-renderFinanceiro();
+})
+.catch(e=>{
+alert("Erro ao salvar: "+e.message);
+console.error(e);
 });
 }
 
