@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Financeiro Bank PRO</title>
 
-<!-- FAVICON BANCO -->
+<!-- FAVICON -->
 <link rel="icon" href="data:image/svg+xml,
 <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
 <circle cx='50' cy='50' r='40' fill='%23ef4444'/>
@@ -25,9 +25,7 @@ body{margin:0;font-family:Arial;background:#0f172a;color:#fff}
 .main{flex:1;padding:20px}
 .card{background:#1e293b;padding:15px;margin:10px 0;border-radius:12px}
 input,select{width:100%;padding:8px;margin:5px 0;background:#020617;color:#fff;border:none;border-radius:6px}
-
 #loginDiv{display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column}
-
 .light{background:#f1f5f9;color:#000}
 .light .card{background:#fff;color:#000}
 .light .sidebar{background:#e2e8f0}
@@ -49,13 +47,14 @@ input,select{width:100%;padding:8px;margin:5px 0;background:#020617;color:#fff;b
 <div class="sidebar">
 <button onclick="mostrar('dashboard')">Dashboard</button>
 <button onclick="mostrar('financeiro')">Financeiro</button>
-<button onclick="mostrar('fixos')">Contas Fixas</button>
+<button onclick="mostrar('links')">Links</button>
 <button onclick="toggleTema()">Tema</button>
 <button onclick="logout()">Sair</button>
 </div>
 
 <div class="main">
 
+<!-- DASHBOARD -->
 <div id="dashboard">
 <h2>Dashboard</h2>
 <div id="dataHora"></div>
@@ -65,8 +64,12 @@ input,select{width:100%;padding:8px;margin:5px 0;background:#020617;color:#fff;b
 <div id="saldo"></div>
 
 <canvas id="grafico"></canvas>
+
+<h3>Links rápidos</h3>
+<div id="linksDashboard"></div>
 </div>
 
+<!-- FINANCEIRO -->
 <div id="financeiro" style="display:none">
 <h2>Lançamentos</h2>
 
@@ -93,15 +96,13 @@ input,select{width:100%;padding:8px;margin:5px 0;background:#020617;color:#fff;b
 <div id="listaFinanceiro"></div>
 </div>
 
-<div id="fixos" style="display:none">
-<h2>Contas Fixas</h2>
-
-<input id="nomeFixo" placeholder="Nome">
-<input id="valorFixo" placeholder="Valor">
-<input id="diaFixo" placeholder="Dia (1-31)">
-<button onclick="salvarFixo()">Salvar</button>
-
-<div id="listaFixos"></div>
+<!-- LINKS -->
+<div id="links" style="display:none">
+<h2>Links</h2>
+<input id="nomeLink" placeholder="Nome">
+<input id="urlLink" placeholder="URL">
+<button onclick="salvarLink()">Salvar</button>
+<div id="listaLinks"></div>
 </div>
 
 </div>
@@ -120,6 +121,7 @@ const auth=firebase.auth();
 const db=firebase.firestore();
 let userId;
 
+// LOGIN
 function login(){auth.signInWithEmailAndPassword(email.value,senha.value)}
 function logout(){auth.signOut()}
 
@@ -135,66 +137,139 @@ app.style.display="none";
 }
 });
 
+// SALVAR FINANCEIRO
 function salvarFinanceiro(){
+
 db.collection("financeiro").add({
 userId,
-valor:parseFloat(valor.value)||0,
+valor:parseFloat(valor.value.replace(",", "."))||0,
 tipo:tipo.value,
-origem:origem.value,
+origem:tipo.value==="Entrada"?"geral":origem.value,
 descricao:descricao.value,
 status:status.value,
 data:new Date().toISOString()
-}).then(init);
-}
-
-function salvarFixo(){
-db.collection("fixos").add({
-userId,
-nome:nomeFixo.value,
-valor:parseFloat(valorFixo.value)||0,
-dia:Number(diaFixo.value)
-}).then(init);
+})
+.then(()=>{
+valor.value="";
+descricao.value="";
+carregarDashboard();
+renderFinanceiro();
+});
 }
 
 // DASHBOARD
 function carregarDashboard(){
 
-let entrada=0,saidaSalario=0,saidaReinvestimento=0;
+let entrada=0,saida=0,saidaSal=0,saidaInv=0;
+
+let mes=Number(mesSelecionado.value);
+let ano=new Date().getFullYear();
 
 db.collection("financeiro").where("userId","==",userId).get()
 .then(snap=>{
 
 snap.forEach(doc=>{
 let f=doc.data();
-if(f.status!="Pago") return;
+if(!f.data) return;
 
-if(f.tipo=="Entrada") entrada+=f.valor;
+let d=new Date(f.data);
 
-if(f.tipo=="Saída"){
-if(f.origem=="salario") saidaSalario+=f.valor;
-if(f.origem=="reinvestimento") saidaReinvestimento+=f.valor;
+if(d.getMonth()==mes && d.getFullYear()==ano){
+
+if(f.status==="Pago"){
+
+if(f.tipo==="Entrada") entrada+=f.valor;
+
+if(f.tipo==="Saída"){
+saida+=f.valor;
+
+if(f.origem==="salario") saidaSal+=f.valor;
+if(f.origem==="reinvestimento") saidaInv+=f.valor;
 }
+
+}
+
+}
+
 });
 
-let salario=(entrada*0.6)-saidaSalario;
-let reinvestimento=(entrada*0.4)-saidaReinvestimento;
+let salario=(entrada*0.6)-saidaSal;
+let investimento=(entrada*0.4)-saidaInv;
+let saldoTotal=entrada-saida;
 
 saldo.innerHTML=`
-💼 Salário: ${salario.toFixed(2)}<br>
-🔁 Investimento: ${reinvestimento.toFixed(2)}
+💰 Entrada: ${entrada.toFixed(2)}<br>
+💸 Saída: ${saida.toFixed(2)}<br>
+📊 Saldo Total: ${saldoTotal.toFixed(2)}<br><br>
+
+💼 Salário disponível: ${salario.toFixed(2)}<br>
+🔁 Investimento disponível: ${investimento.toFixed(2)}
 `;
 
-grafico(entrada,salario,reinvestimento);
+grafico(entrada,saida,salario,investimento);
 
 });
 }
 
 // GRÁFICO
-function grafico(e,s,r){
-if(window.grafico)window.grafico.destroy();
-window.grafico=new Chart(grafico,{
-type:'bar',
-data:{labels:['Entrada','Salário','Investimento'],datasets:[{data:[e,s,r]}]}
+function grafico(e,s,sa,i){
+const ctx=document.getElementById("grafico");
+
+if(window.grafico) window.grafico.destroy();
+
+window.grafico=new Chart(ctx,{
+type:'doughnut',
+data:{
+labels:['Entrada','Saída','Salário','Investimento'],
+datasets:[{data:[e,s,sa,i]}]
+}
+});
+}
+
+// RENDER FINANCEIRO
+function renderFinanceiro(){
+db.collection("financeiro").where("userId","==",userId)
+.onSnapshot(snap=>{
+listaFinanceiro.innerHTML="";
+snap.forEach(doc=>{
+let f=doc.data();
+listaFinanceiro.innerHTML+=`
+<div class="card">
+${f.tipo} - ${f.valor} (${f.origem})<br>
+${f.descricao||""}
+</div>`;
+});
+});
+}
+
+// LINKS
+function salvarLink(){
+db.collection("links").add({
+userId,
+nome:nomeLink.value,
+url:urlLink.value
+}).then(renderLinks);
+}
+
+function renderLinks(){
+db.collection("links").where("userId","==",userId)
+.onSnapshot(snap=>{
+listaLinks.innerHTML="";
+linksDashboard.innerHTML="";
+
+snap.forEach(doc=>{
+let d=doc.data();
+let url=d.url.startsWith("http")?d.url:"https://"+d.url;
+
+listaLinks.innerHTML+=`
+<div class="card">
+${d.nome}
+<button onclick="window.open('${url}')">Abrir</button>
+</div>`;
+
+linksDashboard.innerHTML+=`
+<button onclick="window.open('${url}')">${d.nome}</button>`;
+});
 });
 }
 
@@ -215,14 +290,20 @@ document.body.classList.add("light");
 
 // INIT
 function init(){
+
 mesSelecionado.innerHTML="";
 for(let i=0;i<12;i++){
 mesSelecionado.innerHTML+=`<option value="${i}">${i+1}</option>`;
 }
+
 mesSelecionado.value=new Date().getMonth();
+
 carregarDashboard();
+renderFinanceiro();
+renderLinks();
 }
 
+// NAV
 function mostrar(id){
 document.querySelectorAll('.main>div').forEach(d=>d.style.display='none');
 document.getElementById(id).style.display='block';
