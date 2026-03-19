@@ -349,37 +349,62 @@ unsubscribeFinanceiro = db.collection("financeiro")
 listaFinanceiro.innerHTML="";
 
 snap.forEach(doc=>{
-let f=doc.data();
+let f = doc.data();
 
-// proteção contra undefined e aspas
-let descricao = (f.descricao || "-").replace(/'/g, "\\'");
+// cria card
+let card = document.createElement("div");
+card.className = "card";
 
-listaFinanceiro.innerHTML+=`
-<div class="card">
-
+// conteúdo
+card.innerHTML = `
 <strong>${f.tipo}</strong> - R$ ${f.valor.toFixed(2)} <br>
-
 📂 ${f.origem} <br>
-📝 ${descricao} <br>
+📝 ${f.descricao || "-"} <br>
 
 ${f.tipo === "Entrada" ? `
 💼 Salário: R$ ${(f.salario || 0).toFixed(2)} <br>
 🔁 Investimento: R$ ${(f.investimento || 0).toFixed(2)}
 ` : ""}
-
 <br>
+`;
 
-<button onclick="editarLancamento('${doc.id}', ${f.valor}, '${f.tipo}', '${f.origem}', '${descricao}', '${f.status}')" 
-style="background:#3b82f6;color:#fff;margin-top:5px;">
-Editar
-</button>
+// botão editar
+let btnEditar = document.createElement("button");
+btnEditar.innerText = "Editar";
+btnEditar.style = "background:#3b82f6;color:#fff;margin-top:5px;";
 
-<button onclick="excluirLancamento('${doc.id}')" 
-style="background:#ef4444;color:#fff;margin-top:5px;">
-Excluir
-</button>
+btnEditar.onclick = function(){
+editarLancamento(
+doc.id,
+f.valor,
+f.tipo,
+f.origem,
+f.descricao,
+f.status
+);
+};
+  function excluirLancamento(id){
+if(confirm("Deseja excluir este lançamento?")){
+db.collection("financeiro").doc(id).delete();
+}
+}
 
-</div>`;
+// botão excluir
+let btnExcluir = document.createElement("button");
+btnExcluir.innerText = "Excluir";
+btnExcluir.style = "background:#ef4444;color:#fff;margin-top:5px;";
+
+btnExcluir.onclick = function(){
+excluirLancamento(doc.id);
+};
+
+// adiciona botões
+card.appendChild(btnEditar);
+card.appendChild(btnExcluir);
+
+// adiciona na tela
+listaFinanceiro.appendChild(card);
+
 });
 
 });
