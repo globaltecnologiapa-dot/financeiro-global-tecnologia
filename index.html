@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Financeiro Empresarial PRO</title>
+<title>Financeiro PRO Nível 4</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -14,43 +14,19 @@
 body{margin:0;font-family:Arial;background:#0f172a;color:#fff}
 .container{display:flex}
 .sidebar{width:230px;background:#111827;padding:20px}
-.sidebar button{width:100%;margin:5px 0;padding:10px;border:none;background:#1f2937;color:#fff;border-radius:6px;cursor:pointer}
+.sidebar button{width:100%;margin:5px 0;padding:10px;background:#1f2937;color:#fff;border:none;border-radius:6px;cursor:pointer}
 .main{flex:1;padding:20px}
 
-.card{
-background:#1e293b;
-padding:15px;
-margin:10px 0;
-border-radius:12px;
-transition:0.3s;
-}
-.card:hover{transform:translateY(-3px)}
+.card{background:#1e293b;padding:15px;margin:10px 0;border-radius:12px}
+input,select{width:100%;padding:8px;margin:5px 0;background:#020617;color:#fff;border:none;border-radius:6px}
 
-input,select{
-width:100%;
-padding:10px;
-margin:5px 0;
-background:#020617;
-color:#fff;
-border:none;
-border-radius:6px
-}
+.btn{padding:6px;border:none;border-radius:6px;margin-top:5px;cursor:pointer}
+.editar{background:#3b82f6;color:#fff}
+.excluir{background:#ef4444;color:#fff}
 
-.btn{padding:8px;border:none;border-radius:6px;margin-top:5px;cursor:pointer}
-.btn-editar{background:#3b82f6;color:#fff}
-.btn-excluir{background:#ef4444;color:#fff}
+.alerta{color:#f87171;font-weight:bold}
+.ok{color:#4ade80}
 
-.toast{
-position:fixed;
-bottom:20px;
-right:20px;
-background:#22c55e;
-padding:10px;
-border-radius:6px;
-opacity:0;
-transition:0.3s;
-}
-.toast.show{opacity:1}
 </style>
 </head>
 
@@ -70,19 +46,23 @@ transition:0.3s;
 <button onclick="mostrar('dashboard')">Dashboard</button>
 <button onclick="mostrar('financeiro')">Financeiro</button>
 <button onclick="mostrar('contas')">Contas</button>
-<button onclick="mostrar('estoque')">Estoque</button>
-<button onclick="mostrar('usuarios')">Usuários</button>
 <button onclick="logout()">Sair</button>
 </div>
 
 <div class="main">
 
+<!-- DASHBOARD -->
 <div id="dashboard">
 <h2>Dashboard</h2>
-<div id="saldo"></div>
+
+<select id="mesFiltro" onchange="carregarDashboard()"></select>
+
+<div id="resumo"></div>
+
 <canvas id="grafico"></canvas>
 </div>
 
+<!-- FINANCEIRO -->
 <div id="financeiro" style="display:none">
 <h2>Lançamentos</h2>
 
@@ -92,64 +72,38 @@ transition:0.3s;
 <option>Saída</option>
 </select>
 
-<select id="origem">
-<option value="salario">Salário</option>
-<option value="reinvestimento">Reinvestimento</option>
-<option value="outros">Outros</option>
-</select>
-
 <input id="descricao" placeholder="Descrição">
+
 <select id="status">
 <option>Pago</option>
 <option>Pendente</option>
 </select>
 
-<button onclick="salvarFinanceiro()">Salvar</button>
+<button id="btnSalvar" onclick="salvarFinanceiro()">Salvar</button>
 
-<select id="filtroTipo" onchange="renderFinanceiro()">
-<option value="todos">Todos</option>
-<option value="Entrada">Entrada</option>
-<option value="Saída">Saída</option>
-</select>
+<hr>
 
-<input id="busca" placeholder="Buscar" onkeyup="renderFinanceiro()">
+<input id="busca" placeholder="Buscar..." onkeyup="renderFinanceiro()">
 
 <div id="listaFinanceiro"></div>
 </div>
 
+<!-- CONTAS -->
 <div id="contas" style="display:none">
 <h2>Contas</h2>
-<input id="nomeConta">
-<input id="valorConta">
-<select id="tipoConta">
-<option value="pagar">Pagar</option>
-<option value="receber">Receber</option>
-</select>
+
+<input id="nomeConta" placeholder="Nome">
+<input id="valorConta" placeholder="Valor">
 <input type="date" id="dataConta">
+
 <button onclick="salvarConta()">Salvar</button>
+
 <div id="listaContas"></div>
 </div>
 
-<div id="estoque" style="display:none">
-<h2>Estoque</h2>
-<input id="produto">
-<input id="quantidade">
-<button onclick="salvarProduto()">Salvar</button>
-<div id="listaEstoque"></div>
-</div>
-
-<div id="usuarios" style="display:none">
-<h2>Usuários</h2>
-<input id="novoEmail">
-<button onclick="addUser()">Adicionar</button>
-<div id="listaUsuarios"></div>
-</div>
-
 </div>
 </div>
 </div>
-
-<div id="toast" class="toast"></div>
 
 <script>
 
@@ -165,54 +119,45 @@ firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth();
 const db=firebase.firestore();
 
-let userId,empresaId;
+let userId, editId=null;
 
 // LOGIN
 function login(){auth.signInWithEmailAndPassword(email.value,senha.value)}
 function logout(){auth.signOut()}
 
-auth.onAuthStateChanged(async user=>{
+auth.onAuthStateChanged(user=>{
 if(user){
-
 userId=user.uid;
-
-let doc=await db.collection("usuarios").doc(userId).get();
-
-if(!doc.exists){
-let empresa=await db.collection("empresas").add({nome:"Empresa",dono:userId});
-
-await db.collection("usuarios").doc(userId).set({
-empresaId:empresa.id,
-tipo:"admin"
-});
-}
-
-let dados=(await db.collection("usuarios").doc(userId).get()).data();
-empresaId=dados.empresaId;
-
 loginDiv.style.display="none";
 app.style.display="block";
-
 init();
-
 }else{
 loginDiv.style.display="block";
 app.style.display="none";
 }
 });
 
-// TOAST
-function toast(msg){
-let t=document.getElementById("toast");
-t.innerText=msg;
-t.classList.add("show");
-setTimeout(()=>t.classList.remove("show"),2000);
+// INIT
+function init(){
+
+mesFiltro.innerHTML="";
+for(let i=0;i<12;i++){
+mesFiltro.innerHTML+=`<option value="${i}">${i+1}</option>`;
 }
 
-// FINANCEIRO
+mesFiltro.value=new Date().getMonth();
+
+renderFinanceiro();
+carregarDashboard();
+renderContas();
+}
+
+// SALVAR
 function salvarFinanceiro(){
 
 let v=parseFloat(valor.value);
+
+if(isNaN(v)){alert("Valor inválido");return;}
 
 let sal=0,inv=0;
 
@@ -221,86 +166,171 @@ sal=v*0.6;
 inv=v*0.4;
 }
 
-db.collection("empresas").doc(empresaId).collection("financeiro").add({
+let dados={
+userId,
 valor:v,
 tipo:tipo.value,
-origem:origem.value,
 descricao:descricao.value,
 status:status.value,
 salario:sal,
 investimento:inv,
 data:new Date().toISOString()
-}).then(()=>{toast("Salvo")});
+};
+
+if(editId){
+db.collection("financeiro").doc(editId).update(dados);
+editId=null;
+btnSalvar.innerText="Salvar";
+}else{
+db.collection("financeiro").add(dados);
 }
 
+valor.value="";
+descricao.value="";
+}
+
+// EDITAR
+function editar(id,f){
+valor.value=f.valor;
+tipo.value=f.tipo;
+descricao.value=f.descricao;
+status.value=f.status;
+
+editId=id;
+btnSalvar.innerText="Atualizar";
+}
+
+// EXCLUIR
+function excluir(id){
+if(confirm("Excluir?")){
+db.collection("financeiro").doc(id).delete();
+}
+}
+
+// LISTA
 function renderFinanceiro(){
 
-db.collection("empresas").doc(empresaId).collection("financeiro")
+db.collection("financeiro")
+.where("userId","==",userId)
+.orderBy("data","desc")
 .onSnapshot(snap=>{
 
 listaFinanceiro.innerHTML="";
+let buscaTxt=busca.value.toLowerCase();
 
 snap.forEach(doc=>{
 let f=doc.data();
 
-let card=document.createElement("div");
-card.className="card";
+if(f.descricao && !f.descricao.toLowerCase().includes(buscaTxt)) return;
 
-card.innerHTML=`
+listaFinanceiro.innerHTML+=`
+<div class="card">
 <strong>${f.tipo}</strong> - R$ ${f.valor}<br>
-${f.descricao || "-"}
+📝 ${f.descricao || "-"}<br>
+
+${f.tipo==="Entrada" ? `
+💼 Salário: ${f.salario.toFixed(2)}<br>
+🔁 Investimento: ${f.investimento.toFixed(2)}
+` : ""}
+
+<button class="btn editar" onclick="editar('${doc.id}',${JSON.stringify(f)})">Editar</button>
+<button class="btn excluir" onclick="excluir('${doc.id}')">Excluir</button>
+</div>
 `;
-
-let e=document.createElement("button");
-e.innerText="✏️";
-e.className="btn btn-editar";
-e.onclick=()=>editar(doc.id,f);
-
-let x=document.createElement("button");
-x.innerText="🗑️";
-x.className="btn btn-excluir";
-x.onclick=()=>excluir(doc.id);
-
-card.appendChild(e);
-card.appendChild(x);
-
-listaFinanceiro.appendChild(card);
 });
+
 });
 }
 
-function excluir(id){
-db.collection("empresas").doc(empresaId).collection("financeiro").doc(id).delete();
-toast("Excluído");
+// DASHBOARD
+function carregarDashboard(){
+
+let entrada=0,saida=0;
+
+let mes=Number(mesFiltro.value);
+
+db.collection("financeiro")
+.where("userId","==",userId)
+.get()
+.then(snap=>{
+
+snap.forEach(doc=>{
+let f=doc.data();
+let d=new Date(f.data);
+
+if(d.getMonth()==mes){
+
+if(f.tipo==="Entrada") entrada+=f.valor;
+if(f.tipo==="Saída") saida+=f.valor;
+
+}
+});
+
+let lucro=entrada-saida;
+
+resumo.innerHTML=`
+💰 Entrada: ${entrada.toFixed(2)}<br>
+💸 Saída: ${saida.toFixed(2)}<br>
+📊 Lucro: <span class="${lucro>=0?'ok':'alerta'}">${lucro.toFixed(2)}</span>
+`;
+
+grafico(entrada,saida);
+
+});
+}
+
+// GRÁFICO
+function grafico(e,s){
+
+if(window.g) window.g.destroy();
+
+g=new Chart(grafico,{
+type:'doughnut',
+data:{
+labels:["Entrada","Saída"],
+datasets:[{data:[e,s]}]
+}
+});
 }
 
 // CONTAS
 function salvarConta(){
-db.collection("empresas").doc(empresaId).collection("contas").add({
+db.collection("contas").add({
+userId,
 nome:nomeConta.value,
-valor:valorConta.value
+valor:parseFloat(valorConta.value),
+data:dataConta.value
 });
 }
 
-// ESTOQUE
-function salvarProduto(){
-db.collection("empresas").doc(empresaId).collection("estoque").add({
-nome:produto.value,
-quantidade:quantidade.value
-});
-}
+function renderContas(){
 
-// USUÁRIOS
-function addUser(){
-db.collection("usuarios").add({
-email:novoEmail.value,
-empresaId:empresaId
-});
-}
+db.collection("contas")
+.where("userId","==",userId)
+.onSnapshot(snap=>{
 
-// INIT
-function init(){
-renderFinanceiro();
+listaContas.innerHTML="";
+
+snap.forEach(doc=>{
+let c=doc.data();
+
+let hoje=new Date();
+let venc=new Date(c.data);
+
+let atraso = venc < hoje;
+
+listaContas.innerHTML+=`
+<div class="card">
+${c.nome} - R$ ${c.valor}<br>
+${c.data} 
+<span class="${atraso?'alerta':'ok'}">
+${atraso?'Atrasado':'Em dia'}
+</span>
+</div>
+`;
+});
+
+});
 }
 
 // NAV
