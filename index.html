@@ -152,41 +152,48 @@ app.style.display="none";
 });
 
 // SALVAR FINANCEIRO
-function salvarFinanceiro(){
+function editarLancamento(id, valor, tipo, origem, descricao, status){
 
-const valorInput = document.getElementById("valor");
-const tipoInput = document.getElementById("tipo");
-const origemInput = document.getElementById("origem");
-const descricaoInput = document.getElementById("descricao");
-const statusInput = document.getElementById("status");
+document.getElementById("valor").value = valor;
+document.getElementById("tipo").value = tipo;
+document.getElementById("origem").value = origem;
+document.getElementById("descricao").value = descricao;
+document.getElementById("status").value = status;
 
-let valorFinal = parseFloat(valorInput.value.replace(",", "."));
+const btnSalvar = document.querySelector("#financeiro button");
 
-if(isNaN(valorFinal) || valorFinal <= 0){
-alert("Digite um valor válido");
-return;
+btnSalvar.innerText = "Atualizar";
+
+btnSalvar.onclick = function(){
+
+let novoValor = parseFloat(valorInput.value.replace(",", "."));
+
+let salario = 0;
+let investimento = 0;
+
+if(tipoInput.value === "Entrada"){
+salario = novoValor * 0.6;
+investimento = novoValor * 0.4;
 }
 
-db.collection("financeiro").add({
-userId,
-valor: valorFinal,
+db.collection("financeiro").doc(id).update({
+valor: novoValor,
 tipo: tipoInput.value,
-origem: tipoInput.value==="Entrada" ? "geral" : origemInput.value,
-descricao: descricaoInput.value || "",
+origem: tipoInput.value==="Entrada" ? "entrada" : origemInput.value,
+descricao: descricaoInput.value,
 status: statusInput.value,
-data: new Date().toISOString()
-})
-.then(()=>{
+salario: salario,
+investimento: investimento
+}).then(()=>{
+
+btnSalvar.innerText = "Salvar";
+btnSalvar.onclick = salvarFinanceiro;
+
 valorInput.value="";
 descricaoInput.value="";
-carregarDashboard();
-})
-.catch(e=>{
-alert("Erro ao salvar: "+e.message);
-console.error(e);
 });
+};
 }
-
 // DASHBOARD
 function carregarDashboard(){
 
@@ -257,8 +264,6 @@ datasets:[{data:[e,s,sa,i]}]
 }
 
 // RENDER FINANCEIRO
-let unsubscribeFinanceiro;
-
 function renderFinanceiro(){
 
 if(unsubscribeFinanceiro) unsubscribeFinanceiro();
@@ -276,16 +281,36 @@ let f=doc.data();
 listaFinanceiro.innerHTML+=`
 <div class="card">
 <strong>${f.tipo}</strong> - R$ ${f.valor} <br>
+
 📂 ${f.origem} <br>
 📝 ${f.descricao || "-"} <br>
 
-<button onclick="excluirLancamento('${doc.id}')" style="background:#ef4444;color:#fff;margin-top:5px;">
+${f.tipo === "Entrada" ? `
+💼 Salário: R$ ${f.salario?.toFixed(2) || 0} <br>
+🔁 Investimento: R$ ${f.investimento?.toFixed(2) || 0}
+` : ""}
+
+<br>
+
+<button onclick="editarLancamento('${doc.id}', ${f.valor}, '${f.tipo}', '${f.origem}', '${f.descricao}', '${f.status}')" 
+style="background:#3b82f6;color:#fff;margin-top:5px;">
+Editar
+</button>
+
+<button onclick="excluirLancamento('${doc.id}')" 
+style="background:#ef4444;color:#fff;margin-top:5px;">
 Excluir
 </button>
+
 </div>`;
 });
 
 });
+}
+  function excluirLancamento(id){
+if(confirm("Deseja excluir este lançamento?")){
+db.collection("financeiro").doc(id).delete();
+}
 }
 // LINKS
 function salvarLink(){
