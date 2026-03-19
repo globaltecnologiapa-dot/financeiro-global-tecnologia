@@ -134,6 +134,7 @@ firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth();
 const db=firebase.firestore();
 let userId;
+let unsubscribeFinanceiro;
 
 // LOGIN
 function login(){auth.signInWithEmailAndPassword(email.value,senha.value)}
@@ -350,21 +351,25 @@ listaFinanceiro.innerHTML="";
 snap.forEach(doc=>{
 let f=doc.data();
 
+// proteção contra undefined e aspas
+let descricao = (f.descricao || "-").replace(/'/g, "\\'");
+
 listaFinanceiro.innerHTML+=`
 <div class="card">
-<strong>${f.tipo}</strong> - R$ ${f.valor} <br>
+
+<strong>${f.tipo}</strong> - R$ ${f.valor.toFixed(2)} <br>
 
 📂 ${f.origem} <br>
-📝 ${f.descricao || "-"} <br>
+📝 ${descricao} <br>
 
 ${f.tipo === "Entrada" ? `
-💼 Salário: R$ ${f.salario?.toFixed(2) || 0} <br>
-🔁 Investimento: R$ ${f.investimento?.toFixed(2) || 0}
+💼 Salário: R$ ${(f.salario || 0).toFixed(2)} <br>
+🔁 Investimento: R$ ${(f.investimento || 0).toFixed(2)}
 ` : ""}
 
 <br>
 
-<button onclick="editarLancamento('${doc.id}', ${f.valor}, '${f.tipo}', '${f.origem}', '${f.descricao}', '${f.status}')" 
+<button onclick="editarLancamento('${doc.id}', ${f.valor}, '${f.tipo}', '${f.origem}', '${descricao}', '${f.status}')" 
 style="background:#3b82f6;color:#fff;margin-top:5px;">
 Editar
 </button>
@@ -378,11 +383,6 @@ Excluir
 });
 
 });
-}
-  function excluirLancamento(id){
-if(confirm("Deseja excluir este lançamento?")){
-db.collection("financeiro").doc(id).delete();
-}
 }
 // LINKS
 function salvarLink(){
