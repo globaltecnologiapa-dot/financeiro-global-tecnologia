@@ -152,22 +152,82 @@ app.style.display="none";
 });
 
 // SALVAR FINANCEIRO
-function editarLancamento(id, valor, tipo, origem, descricao, status){
+function salvarFinanceiro(){
 
-document.getElementById("valor").value = valor;
-document.getElementById("tipo").value = tipo;
-document.getElementById("origem").value = origem;
-document.getElementById("descricao").value = descricao;
-document.getElementById("status").value = status;
+const valorInput = document.getElementById("valor");
+const tipoInput = document.getElementById("tipo");
+const origemInput = document.getElementById("origem");
+const descricaoInput = document.getElementById("descricao");
+const statusInput = document.getElementById("status");
 
+let valorFinal = parseFloat(valorInput.value.replace(",", "."));
+
+if(isNaN(valorFinal) || valorFinal <= 0){
+alert("Digite um valor válido");
+return;
+}
+
+let salario = 0;
+let investimento = 0;
+
+if(tipoInput.value === "Entrada"){
+salario = valorFinal * 0.6;
+investimento = valorFinal * 0.4;
+}
+
+db.collection("financeiro").add({
+userId,
+valor: valorFinal,
+tipo: tipoInput.value,
+origem: tipoInput.value==="Entrada" ? "entrada" : origemInput.value,
+descricao: descricaoInput.value || "",
+status: statusInput.value,
+salario: salario,
+investimento: investimento,
+data: new Date().toISOString()
+})
+.then(()=>{
+valorInput.value="";
+descricaoInput.value="";
+carregarDashboard();
+})
+.catch(e=>{
+alert("Erro ao salvar: "+e.message);
+});
+}
+  function editarLancamento(id, valor, tipo, origem, descricao, status){
+
+// pega os inputs
+const valorInput = document.getElementById("valor");
+const tipoInput = document.getElementById("tipo");
+const origemInput = document.getElementById("origem");
+const descricaoInput = document.getElementById("descricao");
+const statusInput = document.getElementById("status");
+
+// preenche os campos
+valorInput.value = valor;
+tipoInput.value = tipo;
+origemInput.value = origem;
+descricaoInput.value = descricao;
+statusInput.value = status;
+
+// botão salvar
 const btnSalvar = document.querySelector("#financeiro button");
 
 btnSalvar.innerText = "Atualizar";
 
+// troca ação do botão
 btnSalvar.onclick = function(){
 
 let novoValor = parseFloat(valorInput.value.replace(",", "."));
 
+// validação
+if(isNaN(novoValor) || novoValor <= 0){
+alert("Digite um valor válido");
+return;
+}
+
+// regra 60/40
 let salario = 0;
 let investimento = 0;
 
@@ -176,23 +236,35 @@ salario = novoValor * 0.6;
 investimento = novoValor * 0.4;
 }
 
+// atualiza no firebase
 db.collection("financeiro").doc(id).update({
 valor: novoValor,
 tipo: tipoInput.value,
 origem: tipoInput.value==="Entrada" ? "entrada" : origemInput.value,
-descricao: descricaoInput.value,
+descricao: descricaoInput.value || "",
 status: statusInput.value,
 salario: salario,
 investimento: investimento
-}).then(()=>{
+})
+.then(()=>{
 
+// volta botão ao normal
 btnSalvar.innerText = "Salvar";
 btnSalvar.onclick = salvarFinanceiro;
 
-valorInput.value="";
-descricaoInput.value="";
+// limpa campos
+valorInput.value = "";
+descricaoInput.value = "";
+
+// atualiza tela
+carregarDashboard();
+})
+.catch(e=>{
+alert("Erro ao atualizar: " + e.message);
 });
+
 };
+
 }
 // DASHBOARD
 function carregarDashboard(){
