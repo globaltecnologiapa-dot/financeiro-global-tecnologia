@@ -194,6 +194,9 @@ window.salvar = async () => {
 // ===== LINKS FIREBASE =====
 
 window.addLink = async () => {
+
+  console.log("USER:", userId); // 👈 COLOQUE AQUI
+
   if(!nomeLink.value || !urlLink.value){
     alert("Preencha nome e URL!");
     return;
