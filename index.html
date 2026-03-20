@@ -155,7 +155,7 @@ const appDiv = document.getElementById("app");
 let userId = null;
 let dados = [];
 let capital = 0;
-let linksData = [];
+let linksData = JSON.parse(localStorage.getItem("links")) || [];
 const links = document.getElementById("links");
 const nomeLink = document.getElementById("nomeLink");
 const urlLink = document.getElementById("urlLink");
@@ -192,7 +192,7 @@ window.salvar = async () => {
   });
   carregar();
 };
-  window.addLink = () => {
+ window.addLink = () => {
   if(!nomeLink.value || !urlLink.value){
     alert("Preencha nome e URL!");
     return;
@@ -202,6 +202,8 @@ window.salvar = async () => {
     nome: nomeLink.value,
     url: urlLink.value
   });
+
+  localStorage.setItem("links", JSON.stringify(linksData));
 
   nomeLink.value = "";
   urlLink.value = "";
@@ -223,9 +225,9 @@ window.salvar = async () => {
 
 window.removerLink = (i) => {
   linksData.splice(i,1);
+  localStorage.setItem("links", JSON.stringify(linksData));
   renderLinks();
 };
-
 window.excluir = async (id)=>{
   await deleteDoc(doc(db,userId,id));
   carregar();
@@ -283,7 +285,7 @@ window.toggleMode = ()=>{
 setInterval(()=>{
   relogio.innerText=new Date().toLocaleString();
 },1000);
-
+renderLinks();
 </script>
 
 </body>
