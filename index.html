@@ -1,139 +1,140 @@
-// Sistema Financeiro Global Tecnologia (Completo)
-// React + Firebase + Tailwind
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Global Tecnologia Financeiro</title>
 
-import { useState, useEffect } from "react";
-import { initializeApp } from "firebase/app";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
-
-// 🔥 CONFIGURE AQUI SEU FIREBASE
-const firebaseConfig={
-apiKey:"AIzaSyApCbQJCUQSwP0g6vSBqwrIMSK7n-w9ILc",
-authDomain:"global-tecnologia-kanban.firebaseapp.com",
-projectId:"global-tecnologia-kanban"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-export default function App() {
-  const [user, setUser] = useState(null);
-  const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
-
-  const [valor, setValor] = useState("");
-  const [descricao, setDescricao] = useState("");
-  const [tipo, setTipo] = useState("entrada");
-
-  const [dados, setDados] = useState([]);
-  const [capitalGiro, setCapitalGiro] = useState(0);
-
-  useEffect(() => {
-    onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      if (u) carregarDados();
-    });
-  }, []);
-
-  const login = async () => {
-    await signInWithEmailAndPassword(auth, email, senha);
-  };
-
-  const logout = async () => {
-    await signOut(auth);
-  };
-
-  const carregarDados = async () => {
-    const querySnapshot = await getDocs(collection(db, "lancamentos"));
-    const lista = [];
-    querySnapshot.forEach((doc) => {
-      lista.push({ id: doc.id, ...doc.data() });
-    });
-    setDados(lista);
-  };
-
-  const adicionar = async () => {
-    if (!valor) return;
-    await addDoc(collection(db, "lancamentos"), {
-      valor: parseFloat(valor),
-      descricao,
-      tipo,
-      data: new Date().toISOString(),
-    });
-    setValor("");
-    setDescricao("");
-    carregarDados();
-  };
-
-  const excluir = async (id) => {
-    await deleteDoc(doc(db, "lancamentos", id));
-    carregarDados();
-  };
-
-  const entradas = dados.filter((d) => d.tipo === "entrada");
-  const saidas = dados.filter((d) => d.tipo === "saida");
-
-  const totalEntradas = entradas.reduce((a, b) => a + b.valor, 0);
-  const totalSaidas = saidas.reduce((a, b) => a + b.valor, 0);
-  const lucro = totalEntradas - totalSaidas;
-
-  const salarioMax = lucro * 0.3;
-  const disponivelInvestir = lucro - salarioMax - capitalGiro;
-
-  if (!user) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-gray-900 text-white">
-        <div className="bg-gray-800 p-6 rounded-xl">
-          <h1 className="text-xl mb-4">Global Tecnologia</h1>
-          <input placeholder="Email" onChange={(e)=>setEmail(e.target.value)} className="block mb-2 p-2 text-black" />
-          <input placeholder="Senha" type="password" onChange={(e)=>setSenha(e.target.value)} className="block mb-2 p-2 text-black" />
-          <button onClick={login} className="bg-blue-500 px-4 py-2">Entrar</button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-4 bg-gray-100 min-h-screen">
-      <div className="flex justify-between">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <button onClick={logout}>Sair</button>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-        <div className="bg-white p-4">Entradas: {totalEntradas}</div>
-        <div className="bg-white p-4">Saídas: {totalSaidas}</div>
-        <div className="bg-white p-4">Lucro: {lucro}</div>
-        <div className="bg-white p-4">Salário Máx (30%): {salarioMax}</div>
-        <div className="bg-white p-4">Capital de Giro: {capitalGiro}</div>
-        <div className="bg-white p-4">Investir: {disponivelInvestir}</div>
-      </div>
-
-      <div className="mt-4">
-        <input placeholder="Valor" type="number" value={valor} onChange={(e)=>setValor(e.target.value)} />
-        <input placeholder="Descrição" value={descricao} onChange={(e)=>setDescricao(e.target.value)} />
-        <select onChange={(e)=>setTipo(e.target.value)}>
-          <option value="entrada">Entrada</option>
-          <option value="saida">Saída</option>
-        </select>
-        <button onClick={adicionar}>Adicionar</button>
-      </div>
-
-      <div className="mt-4">
-        <h2>Histórico</h2>
-        {dados.map((d) => (
-          <div key={d.id} className="flex justify-between bg-white p-2 mt-2">
-            <span>{d.descricao} - {d.valor}</span>
-            <button onClick={()=>excluir(d.id)}>Excluir</button>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-4">
-        <h2>Definir Capital de Giro</h2>
-        <input type="number" onChange={(e)=>setCapitalGiro(parseFloat(e.target.value))} />
-      </div>
-    </div>
-  );
+<style>
+body {
+  font-family: Arial;
+  background: #0f172a;
+  color: white;
+  padding: 20px;
 }
+
+.card {
+  background: #1e293b;
+  padding: 15px;
+  margin: 10px;
+  border-radius: 10px;
+}
+
+input, select, button {
+  padding: 8px;
+  margin: 5px;
+  border-radius: 5px;
+  border: none;
+}
+
+button {
+  background: orange;
+  color: black;
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Global Tecnologia</h1>
+
+<div class="card">
+  <input id="valor" type="number" placeholder="Valor">
+  <input id="descricao" placeholder="Descrição">
+
+  <select id="tipo">
+    <option value="entrada">Entrada</option>
+    <option value="saida">Saída</option>
+  </select>
+
+  <button onclick="adicionar()">Adicionar</button>
+</div>
+
+<div class="card">
+  <h3>Dashboard</h3>
+  <p>Entradas: <span id="entradas"></span></p>
+  <p>Saídas: <span id="saidas"></span></p>
+  <p>Lucro: <span id="lucro"></span></p>
+  <p>Salário (30%): <span id="salario"></span></p>
+  <p>Investir: <span id="investir"></span></p>
+</div>
+
+<div class="card">
+  <h3>Capital de Giro</h3>
+  <input id="capital" type="number" onchange="salvarCapital()">
+</div>
+
+<div class="card">
+  <h3>Histórico</h3>
+  <div id="lista"></div>
+</div>
+
+<script>
+let dados = JSON.parse(localStorage.getItem("dados")) || [];
+let capital = localStorage.getItem("capital") || 0;
+
+document.getElementById("capital").value = capital;
+
+function salvar() {
+  localStorage.setItem("dados", JSON.stringify(dados));
+}
+
+function salvarCapital() {
+  capital = parseFloat(document.getElementById("capital").value) || 0;
+  localStorage.setItem("capital", capital);
+  atualizar();
+}
+
+function adicionar() {
+  let valor = parseFloat(document.getElementById("valor").value);
+  let descricao = document.getElementById("descricao").value;
+  let tipo = document.getElementById("tipo").value;
+
+  if (!valor) return;
+
+  dados.push({ valor, descricao, tipo });
+  salvar();
+  atualizar();
+}
+
+function excluir(index) {
+  dados.splice(index, 1);
+  salvar();
+  atualizar();
+}
+
+function atualizar() {
+  let entradas = dados.filter(d => d.tipo === "entrada")
+                      .reduce((a,b)=>a+b.valor,0);
+
+  let saidas = dados.filter(d => d.tipo === "saida")
+                    .reduce((a,b)=>a+b.valor,0);
+
+  let lucro = entradas - saidas;
+  let salario = lucro * 0.3;
+  let investir = lucro - salario - capital;
+
+  document.getElementById("entradas").innerText = entradas;
+  document.getElementById("saidas").innerText = saidas;
+  document.getElementById("lucro").innerText = lucro;
+  document.getElementById("salario").innerText = salario;
+  document.getElementById("investir").innerText = investir;
+
+  let lista = document.getElementById("lista");
+  lista.innerHTML = "";
+
+  dados.forEach((d, i) => {
+    lista.innerHTML += `
+      <div>
+        ${d.descricao} - R$ ${d.valor}
+        <button onclick="excluir(${i})">Excluir</button>
+      </div>
+    `;
+  });
+}
+
+atualizar();
+</script>
+
+</body>
+</html>
