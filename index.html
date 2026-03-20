@@ -1,10 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Global Tecnologia</title>
+
+<link rel="icon" href="https://cdn-icons-png.flaticon.com/512/684/684908.png">
+
+<style>
+body {
+  margin:0;
+  font-family: Arial;
+  background:#0f172a;
+  color:white;
+}
+
+.light {
+  background:#f1f5f9;
+  color:black;
+}
+
+.container {
+  padding:20px;
+  max-width:1200px;
+  margin:auto;
+}
+
+.card {
+  background:#1e293b;
+  padding:15px;
+  border-radius:12px;
+  margin:10px 0;
+  box-shadow:0 0 10px rgba(0,0,0,0.5);
+}
+
+input, select {
+  padding:10px;
+  margin:5px;
+  border-radius:6px;
+  border:none;
+}
+
+button {
+  background:linear-gradient(45deg, orange, #ff6600);
+  border:none;
+  padding:10px;
+  border-radius:6px;
+  cursor:pointer;
+  color:white;
+}
+
+.grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:10px;
+}
+
+.top {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+</style>
+</head>
+
+<body>
+
+<div id="login" class="container">
+  <div class="card">
+    <h2>Global Tecnologia</h2>
+    <input id="email" placeholder="Email">
+    <input id="senha" type="password" placeholder="Senha">
+    <button onclick="login()">Entrar</button>
+  </div>
+</div>
+
+<div id="app" class="container" style="display:none;">
+
+<div class="top">
+  <h2>Dashboard</h2>
+  <div>
+    <button onclick="toggleMode()">Modo</button>
+    <button onclick="logout()">Sair</button>
+  </div>
+</div>
+
+<div id="relogio"></div>
+
+<div class="grid">
+  <div class="card">Entradas: <span id="entradas"></span></div>
+  <div class="card">Saídas: <span id="saidas"></span></div>
+  <div class="card">Lucro: <span id="lucro"></span></div>
+  <div class="card">Salário (30%): <span id="salario"></span></div>
+  <div class="card">Capital: <span id="capitalView"></span></div>
+  <div class="card">Investir: <span id="investir"></span></div>
+</div>
+
+<div class="card">
+  <input id="valor" type="number" placeholder="Valor">
+  <input id="descricao" placeholder="Descrição">
+  <input id="data" type="date">
+  <select id="tipo">
+    <option value="entrada">Entrada</option>
+    <option value="saida">Saída</option>
+  </select>
+  <select id="categoria">
+    <option value="salario">Salário</option>
+    <option value="material">Material</option>
+    <option value="outros">Outros</option>
+  </select>
+  <button onclick="salvar()">Salvar</button>
+</div>
+
+<div class="card">
+  <h3>Capital de Giro</h3>
+  <input id="capital" type="number" onchange="salvarCapital()">
+</div>
+
+<div class="card">
+  <h3>Links Rápidos</h3>
+  <input id="nomeLink" placeholder="Nome">
+  <input id="urlLink" placeholder="URL">
+  <button onclick="addLink()">Adicionar</button>
+  <div id="links"></div>
+</div>
+
+<div class="card">
+  <h3>Histórico</h3>
+  <div id="lista"></div>
+</div>
+
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyApCbQJCUQSwP0g6vSBqwrIMSK7n-w9ILc",
+  apiKey: "SUA_API_KEY",
   authDomain: "global-tecnologia-kanban.firebaseapp.com",
   projectId: "global-tecnologia-kanban"
 };
@@ -13,143 +146,96 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// 🔧 ELEMENTOS
 const loginDiv = document.getElementById("login");
 const appDiv = document.getElementById("app");
-
-const emailInput = document.getElementById("email");
-const senhaInput = document.getElementById("senha");
-
-const lista = document.getElementById("lista");
-const relogio = document.getElementById("relogio");
-const linksDiv = document.getElementById("links");
-
-const valorInput = document.getElementById("valor");
-const descricaoInput = document.getElementById("descricao");
-const tipoInput = document.getElementById("tipo");
-const dataInput = document.getElementById("data");
-const capitalInput = document.getElementById("capital");
 
 let userId = null;
 let dados = [];
 let capital = 0;
-let links = [];
 
-// 🔐 LOGIN
 window.login = async () => {
-  try {
-    await signInWithEmailAndPassword(auth, emailInput.value, senhaInput.value);
-  } catch (e) {
-    alert("Erro ao entrar: " + e.message);
-  }
+  await signInWithEmailAndPassword(auth, email.value, senha.value);
 };
 
 window.logout = () => signOut(auth);
 
-// 🔄 AUTENTICAÇÃO
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     userId = user.uid;
-    loginDiv.style.display = "none";
-    appDiv.style.display = "block";
+    loginDiv.style.display="none";
+    appDiv.style.display="block";
     carregar();
-  } else {
-    loginDiv.style.display = "block";
-    appDiv.style.display = "none";
   }
 });
 
-// 📥 CARREGAR DADOS
-async function carregar() {
-  dados = [];
+async function carregar(){
+  dados=[];
   const snap = await getDocs(collection(db, userId));
-  snap.forEach(d => dados.push({ id: d.id, ...d.data() }));
+  snap.forEach(d=>dados.push({id:d.id,...d.data()}));
   atualizar();
 }
 
-// 💾 SALVAR LANÇAMENTO
 window.salvar = async () => {
-  if (!valorInput.value) return alert("Digite um valor");
-
   await addDoc(collection(db, userId), {
-    valor: parseFloat(valorInput.value),
-    descricao: descricaoInput.value,
-    tipo: tipoInput.value,
-    data: dataInput.value
+    valor: parseFloat(valor.value),
+    descricao: descricao.value,
+    tipo: tipo.value,
+    categoria: categoria.value,
+    data: data.value
   });
-
-  valorInput.value = "";
-  descricaoInput.value = "";
-
   carregar();
 };
 
-// ❌ EXCLUIR
-window.excluir = async (id) => {
-  await deleteDoc(doc(db, userId, id));
+window.excluir = async (id)=>{
+  await deleteDoc(doc(db,userId,id));
   carregar();
 };
 
-// 💰 CAPITAL DE GIRO
-window.salvarCapital = () => {
-  capital = parseFloat(capitalInput.value) || 0;
+window.editar = async (id)=>{
+  let novo = prompt("Novo valor:");
+  await updateDoc(doc(db,userId,id),{valor:parseFloat(novo)});
+  carregar();
+};
+
+window.salvarCapital = ()=>{
+  capital=parseFloat(document.getElementById("capital").value)||0;
   atualizar();
 };
 
-// 📊 DASHBOARD
-function atualizar() {
-  let entradas = dados.filter(d => d.tipo === "entrada").reduce((a,b)=>a+b.valor,0);
-  let saidas = dados.filter(d => d.tipo === "saida").reduce((a,b)=>a+b.valor,0);
+function atualizar(){
+  let entradas = dados.filter(d=>d.tipo=="entrada").reduce((a,b)=>a+b.valor,0);
+  let saidas = dados.filter(d=>d.tipo=="saida").reduce((a,b)=>a+b.valor,0);
   let lucro = entradas - saidas;
-  let salario = lucro * 0.3;
+  let salario = lucro*0.3;
   let investir = lucro - salario - capital;
 
-  document.getElementById("entradas").innerText = entradas.toFixed(2);
-  document.getElementById("saidas").innerText = saidas.toFixed(2);
-  document.getElementById("lucro").innerText = lucro.toFixed(2);
-  document.getElementById("salario").innerText = salario.toFixed(2);
-  document.getElementById("investir").innerText = investir.toFixed(2);
-  document.getElementById("capitalView").innerText = capital.toFixed(2);
+  entradasEl.innerText=entradas.toFixed(2);
+  saidasEl.innerText=saidas.toFixed(2);
+  lucroEl.innerText=lucro.toFixed(2);
+  salarioEl.innerText=salario.toFixed(2);
+  investirEl.innerText=investir.toFixed(2);
+  capitalView.innerText=capital.toFixed(2);
 
-  lista.innerHTML = "";
-  dados.forEach(d => {
-    lista.innerHTML += `
-      <div style="margin:5px 0">
-        ${d.descricao} - R$ ${d.valor}
-        <button onclick="excluir('${d.id}')">Excluir</button>
-      </div>
-    `;
+  lista.innerHTML="";
+  dados.forEach(d=>{
+    lista.innerHTML+=`
+    <div>
+      ${d.descricao} - R$ ${d.valor}
+      <button onclick="editar('${d.id}')">Editar</button>
+      <button onclick="excluir('${d.id}')">Excluir</button>
+    </div>`;
   });
 }
 
-// 🔗 LINKS
-window.addLink = () => {
-  links.push({
-    nome: document.getElementById("nomeLink").value,
-    url: document.getElementById("urlLink").value
-  });
-  renderLinks();
-};
-
-function renderLinks() {
-  linksDiv.innerHTML = "";
-  links.forEach((l,i) => {
-    linksDiv.innerHTML += `
-      <div>
-        <a href="${l.url}" target="_blank">${l.nome}</a>
-        <button onclick="links.splice(${i},1);renderLinks()">Excluir</button>
-      </div>
-    `;
-  });
-}
-
-// ⏰ RELÓGIO
-setInterval(() => {
-  relogio.innerText = new Date().toLocaleString();
-}, 1000);
-
-// 🌙 MODO
-window.toggleMode = () => {
+window.toggleMode = ()=>{
   document.body.classList.toggle("light");
 };
+
+setInterval(()=>{
+  relogio.innerText=new Date().toLocaleString();
+},1000);
+
 </script>
+
+</body>
+</html>
