@@ -155,6 +155,10 @@ const appDiv = document.getElementById("app");
 let userId = null;
 let dados = [];
 let capital = 0;
+let linksData = [];
+const links = document.getElementById("links");
+const nomeLink = document.getElementById("nomeLink");
+const urlLink = document.getElementById("urlLink");
 
 window.login = async () => {
   await signInWithEmailAndPassword(auth, email.value, senha.value);
@@ -187,6 +191,22 @@ window.salvar = async () => {
     data: data.value
   });
   carregar();
+};
+  window.addLink = () => {
+  if(!nomeLink.value || !urlLink.value){
+    alert("Preencha nome e URL!");
+    return;
+  }
+
+  linksData.push({
+    nome: nomeLink.value,
+    url: urlLink.value
+  });
+
+  nomeLink.value = "";
+  urlLink.value = "";
+
+  renderLinks();
 };
 
 window.excluir = async (id)=>{
