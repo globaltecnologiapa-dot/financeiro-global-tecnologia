@@ -172,9 +172,9 @@ onAuthStateChanged(auth, async (user) => {
     loginDiv.style.display="none";
     appDiv.style.display="block";
     carregar();
+    carregarLinks(); // 👈 MUITO IMPORTANTE
   }
 });
-
 async function carregar(){
   dados=[];
   const snap = await getDocs(collection(db, userId));
@@ -192,47 +192,50 @@ window.salvar = async () => {
   });
   carregar();
 };
- window.addLink = () => {
+// ===== LINKS FIREBASE =====
+
+window.addLink = async () => {
   if(!nomeLink.value || !urlLink.value){
     alert("Preencha nome e URL!");
     return;
   }
 
-  linksData.push({
+  await addDoc(collection(db, userId, "links"), {
     nome: nomeLink.value,
     url: urlLink.value
   });
 
-  localStorage.setItem("links", JSON.stringify(linksData));
-
   nomeLink.value = "";
   urlLink.value = "";
 
-  renderLinks();
+  carregarLinks();
 };
- function renderLinks(){
+
+window.removerLink = async (id) => {
+  await deleteDoc(doc(db, userId, "links", id));
+  carregarLinks();
+};
+
+async function carregarLinks(){
   links.innerHTML = "";
 
-  linksData.forEach((l, i) => {
+  const snap = await getDocs(collection(db, userId, "links"));
+
+  snap.forEach(docItem => {
+    const l = docItem.data();
+
     links.innerHTML += `
       <div>
         <a class="link-rapido" href="${l.url}" target="_blank">${l.nome}</a>
-        <button onclick="removerLink(${i})">Excluir</button>
+        <button onclick="removerLink('${docItem.id}')">Excluir</button>
       </div>
     `;
   });
 }
-
-window.removerLink = (i) => {
-  linksData.splice(i,1);
-  localStorage.setItem("links", JSON.stringify(linksData));
-  renderLinks();
-};
-window.excluir = async (id)=>{
-  await deleteDoc(doc(db,userId,id));
+  window.excluir = async (id)=>{
+  await deleteDoc(doc(db, userId, id));
   carregar();
 };
-
 window.editar = async (id)=>{
   let novo = prompt("Novo valor:");
   await updateDoc(doc(db,userId,id),{valor:parseFloat(novo)});
