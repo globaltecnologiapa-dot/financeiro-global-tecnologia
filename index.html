@@ -1,130 +1,3 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<title>Global Tecnologia</title>
-
-<link rel="icon" href="https://cdn-icons-png.flaticon.com/512/684/684908.png">
-
-<style>
-body {
-  margin:0;
-  font-family: Arial;
-  background: #0f172a;
-  color:white;
-}
-
-.container {
-  padding:20px;
-}
-
-.card {
-  background:#1e293b;
-  padding:15px;
-  margin:10px 0;
-  border-radius:10px;
-}
-
-input, select, button {
-  padding:10px;
-  margin:5px;
-  border:none;
-  border-radius:5px;
-}
-
-button {
-  background: orange;
-  cursor:pointer;
-}
-
-.grid {
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
-  gap:10px;
-}
-
-.top {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-.dark {
-  background:#0f172a;
-  color:white;
-}
-
-.light {
-  background:#f1f5f9;
-  color:black;
-}
-</style>
-</head>
-
-<body>
-
-<div id="login" class="container">
-  <div class="card">
-    <h2>Global Tecnologia</h2>
-    <input id="email" placeholder="Email">
-    <input id="senha" type="password" placeholder="Senha">
-    <button onclick="login()">Entrar</button>
-  </div>
-</div>
-
-<div id="app" class="container" style="display:none;">
-
-  <div class="top">
-    <h2>Dashboard</h2>
-    <div>
-      <button onclick="toggleMode()">Modo</button>
-      <button onclick="logout()">Sair</button>
-    </div>
-  </div>
-
-  <div id="relogio"></div>
-
-  <div class="grid">
-    <div class="card">Entradas: <span id="entradas"></span></div>
-    <div class="card">Saídas: <span id="saidas"></span></div>
-    <div class="card">Lucro: <span id="lucro"></span></div>
-    <div class="card">Salário (30%): <span id="salario"></span></div>
-    <div class="card">Capital de Giro: <span id="capitalView"></span></div>
-    <div class="card">Investir: <span id="investir"></span></div>
-  </div>
-
-  <div class="card">
-    <input id="valor" type="number" placeholder="Valor">
-    <input id="descricao" placeholder="Descrição">
-    <input id="data" type="date">
-    <select id="tipo">
-      <option value="entrada">Entrada</option>
-      <option value="saida">Saída</option>
-    </select>
-    <button onclick="salvar()">Salvar</button>
-  </div>
-
-  <div class="card">
-    <h3>Capital de Giro</h3>
-    <input id="capital" type="number" onchange="salvarCapital()">
-  </div>
-
-  <div class="card">
-    <h3>Links Rápidos</h3>
-    <input id="nomeLink" placeholder="Nome">
-    <input id="urlLink" placeholder="URL">
-    <button onclick="addLink()">Adicionar</button>
-    <div id="links"></div>
-  </div>
-
-  <div class="card">
-    <h3>Histórico</h3>
-    <div id="lista"></div>
-  </div>
-
-</div>
-
-<!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -149,97 +22,123 @@ let dados = [];
 let capital = 0;
 let links = [];
 
+// ELEMENTOS
+const loginDiv = document.getElementById("login");
+const appDiv = document.getElementById("app");
+
+const emailInput = document.getElementById("email");
+const senhaInput = document.getElementById("senha");
+
+const lista = document.getElementById("lista");
+const relogio = document.getElementById("relogio");
+const linksDiv = document.getElementById("links");
+
+// LOGIN
 window.login = async () => {
-  await signInWithEmailAndPassword(auth, email.value, senha.value);
+  try {
+    await signInWithEmailAndPassword(auth, emailInput.value, senhaInput.value);
+  } catch (e) {
+    alert("Erro login: " + e.message);
+  }
 };
 
 window.logout = () => signOut(auth);
 
+// AUTH
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     userId = user.uid;
-    login.style.display="none";
-    appDiv.style.display="block";
+    loginDiv.style.display = "none";
+    appDiv.style.display = "block";
     carregar();
   }
 });
 
-async function carregar(){
-  dados=[];
+// CARREGAR DADOS
+async function carregar() {
+  dados = [];
   const snap = await getDocs(collection(db, userId));
-  snap.forEach(doc=>dados.push({id:doc.id,...doc.data()}));
+  snap.forEach(d => dados.push({ id: d.id, ...d.data() }));
   atualizar();
 }
 
+// SALVAR
 window.salvar = async () => {
   await addDoc(collection(db, userId), {
-    valor: parseFloat(valor.value),
-    descricao: descricao.value,
-    tipo: tipo.value,
-    data: data.value
+    valor: parseFloat(document.getElementById("valor").value),
+    descricao: document.getElementById("descricao").value,
+    tipo: document.getElementById("tipo").value,
+    data: document.getElementById("data").value
   });
   carregar();
 };
 
-window.excluir = async (id)=>{
+// EXCLUIR
+window.excluir = async (id) => {
   await deleteDoc(doc(db, userId, id));
   carregar();
 };
 
-window.salvarCapital = ()=>{
-  capital=parseFloat(document.getElementById("capital").value)||0;
+// CAPITAL
+window.salvarCapital = () => {
+  capital = parseFloat(document.getElementById("capital").value) || 0;
   atualizar();
 };
 
-function atualizar(){
-  let entradas = dados.filter(d=>d.tipo=="entrada").reduce((a,b)=>a+b.valor,0);
-  let saidas = dados.filter(d=>d.tipo=="saida").reduce((a,b)=>a+b.valor,0);
+// ATUALIZAR DASHBOARD
+function atualizar() {
+  let entradas = dados.filter(d => d.tipo === "entrada").reduce((a,b)=>a+b.valor,0);
+  let saidas = dados.filter(d => d.tipo === "saida").reduce((a,b)=>a+b.valor,0);
   let lucro = entradas - saidas;
-  let salario = lucro*0.3;
+  let salario = lucro * 0.3;
   let investir = lucro - salario - capital;
 
-  document.getElementById("entradas").innerText=entradas;
-  document.getElementById("saidas").innerText=saidas;
-  document.getElementById("lucro").innerText=lucro;
-  document.getElementById("salario").innerText=salario;
-  document.getElementById("investir").innerText=investir;
-  document.getElementById("capitalView").innerText=capital;
+  document.getElementById("entradas").innerText = entradas;
+  document.getElementById("saidas").innerText = saidas;
+  document.getElementById("lucro").innerText = lucro;
+  document.getElementById("salario").innerText = salario;
+  document.getElementById("investir").innerText = investir;
+  document.getElementById("capitalView").innerText = capital;
 
-  lista.innerHTML="";
-  dados.forEach(d=>{
-    lista.innerHTML+=`
-    <div>
-      ${d.descricao} - ${d.valor}
-      <button onclick="excluir('${d.id}')">Excluir</button>
-    </div>`;
+  lista.innerHTML = "";
+  dados.forEach(d => {
+    lista.innerHTML += `
+      <div>
+        ${d.descricao} - R$ ${d.valor}
+        <button onclick="excluir('${d.id}')">Excluir</button>
+      </div>
+    `;
   });
 }
 
-window.addLink = ()=>{
-  links.push({nome:nomeLink.value,url:urlLink.value});
+// LINKS
+window.addLink = () => {
+  links.push({
+    nome: document.getElementById("nomeLink").value,
+    url: document.getElementById("urlLink").value
+  });
   renderLinks();
 };
 
-function renderLinks(){
-  linksDiv.innerHTML="";
-  links.forEach((l,i)=>{
-    linksDiv.innerHTML+=`
-    <div>
-      <a href="${l.url}" target="_blank">${l.nome}</a>
-      <button onclick="links.splice(${i},1);renderLinks()">Excluir</button>
-    </div>`;
+function renderLinks() {
+  linksDiv.innerHTML = "";
+  links.forEach((l,i) => {
+    linksDiv.innerHTML += `
+      <div>
+        <a href="${l.url}" target="_blank">${l.nome}</a>
+        <button onclick="links.splice(${i},1);renderLinks()">Excluir</button>
+      </div>
+    `;
   });
 }
 
-setInterval(()=>{
+// RELÓGIO
+setInterval(() => {
   relogio.innerText = new Date().toLocaleString();
-},1000);
+}, 1000);
 
-window.toggleMode = ()=>{
+// DARK MODE
+window.toggleMode = () => {
   document.body.classList.toggle("light");
 };
-
 </script>
-
-</body>
-</html>
