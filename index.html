@@ -6,23 +6,14 @@ import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https
 const firebaseConfig = {
   apiKey: "AIzaSyApCbQJCUQSwP0g6vSBqwrIMSK7n-w9ILc",
   authDomain: "global-tecnologia-kanban.firebaseapp.com",
-  projectId: "global-tecnologia-kanban",
-  storageBucket: "global-tecnologia-kanban.firebasestorage.app",
-  messagingSenderId: "526527534352",
-  appId: "1:526527534352:web:22b874f8029b3cd4c48195",
-  measurementId: "G-MX3QFXSL04"
+  projectId: "global-tecnologia-kanban"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-let userId = null;
-let dados = [];
-let capital = 0;
-let links = [];
-
-// ELEMENTOS
+// 🔧 ELEMENTOS
 const loginDiv = document.getElementById("login");
 const appDiv = document.getElementById("app");
 
@@ -33,28 +24,42 @@ const lista = document.getElementById("lista");
 const relogio = document.getElementById("relogio");
 const linksDiv = document.getElementById("links");
 
-// LOGIN
+const valorInput = document.getElementById("valor");
+const descricaoInput = document.getElementById("descricao");
+const tipoInput = document.getElementById("tipo");
+const dataInput = document.getElementById("data");
+const capitalInput = document.getElementById("capital");
+
+let userId = null;
+let dados = [];
+let capital = 0;
+let links = [];
+
+// 🔐 LOGIN
 window.login = async () => {
   try {
     await signInWithEmailAndPassword(auth, emailInput.value, senhaInput.value);
   } catch (e) {
-    alert("Erro login: " + e.message);
+    alert("Erro ao entrar: " + e.message);
   }
 };
 
 window.logout = () => signOut(auth);
 
-// AUTH
+// 🔄 AUTENTICAÇÃO
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     userId = user.uid;
     loginDiv.style.display = "none";
     appDiv.style.display = "block";
     carregar();
+  } else {
+    loginDiv.style.display = "block";
+    appDiv.style.display = "none";
   }
 });
 
-// CARREGAR DADOS
+// 📥 CARREGAR DADOS
 async function carregar() {
   dados = [];
   const snap = await getDocs(collection(db, userId));
@@ -62,30 +67,36 @@ async function carregar() {
   atualizar();
 }
 
-// SALVAR
+// 💾 SALVAR LANÇAMENTO
 window.salvar = async () => {
+  if (!valorInput.value) return alert("Digite um valor");
+
   await addDoc(collection(db, userId), {
-    valor: parseFloat(document.getElementById("valor").value),
-    descricao: document.getElementById("descricao").value,
-    tipo: document.getElementById("tipo").value,
-    data: document.getElementById("data").value
+    valor: parseFloat(valorInput.value),
+    descricao: descricaoInput.value,
+    tipo: tipoInput.value,
+    data: dataInput.value
   });
+
+  valorInput.value = "";
+  descricaoInput.value = "";
+
   carregar();
 };
 
-// EXCLUIR
+// ❌ EXCLUIR
 window.excluir = async (id) => {
   await deleteDoc(doc(db, userId, id));
   carregar();
 };
 
-// CAPITAL
+// 💰 CAPITAL DE GIRO
 window.salvarCapital = () => {
-  capital = parseFloat(document.getElementById("capital").value) || 0;
+  capital = parseFloat(capitalInput.value) || 0;
   atualizar();
 };
 
-// ATUALIZAR DASHBOARD
+// 📊 DASHBOARD
 function atualizar() {
   let entradas = dados.filter(d => d.tipo === "entrada").reduce((a,b)=>a+b.valor,0);
   let saidas = dados.filter(d => d.tipo === "saida").reduce((a,b)=>a+b.valor,0);
@@ -93,17 +104,17 @@ function atualizar() {
   let salario = lucro * 0.3;
   let investir = lucro - salario - capital;
 
-  document.getElementById("entradas").innerText = entradas;
-  document.getElementById("saidas").innerText = saidas;
-  document.getElementById("lucro").innerText = lucro;
-  document.getElementById("salario").innerText = salario;
-  document.getElementById("investir").innerText = investir;
-  document.getElementById("capitalView").innerText = capital;
+  document.getElementById("entradas").innerText = entradas.toFixed(2);
+  document.getElementById("saidas").innerText = saidas.toFixed(2);
+  document.getElementById("lucro").innerText = lucro.toFixed(2);
+  document.getElementById("salario").innerText = salario.toFixed(2);
+  document.getElementById("investir").innerText = investir.toFixed(2);
+  document.getElementById("capitalView").innerText = capital.toFixed(2);
 
   lista.innerHTML = "";
   dados.forEach(d => {
     lista.innerHTML += `
-      <div>
+      <div style="margin:5px 0">
         ${d.descricao} - R$ ${d.valor}
         <button onclick="excluir('${d.id}')">Excluir</button>
       </div>
@@ -111,7 +122,7 @@ function atualizar() {
   });
 }
 
-// LINKS
+// 🔗 LINKS
 window.addLink = () => {
   links.push({
     nome: document.getElementById("nomeLink").value,
@@ -132,12 +143,12 @@ function renderLinks() {
   });
 }
 
-// RELÓGIO
+// ⏰ RELÓGIO
 setInterval(() => {
   relogio.innerText = new Date().toLocaleString();
 }, 1000);
 
-// DARK MODE
+// 🌙 MODO
 window.toggleMode = () => {
   document.body.classList.toggle("light");
 };
