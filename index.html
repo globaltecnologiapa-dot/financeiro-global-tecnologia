@@ -214,7 +214,7 @@ window.salvar = async () => {
   linksData.forEach((l, i) => {
     links.innerHTML += `
       <div>
-        <a href="${l.url}" target="_blank">${l.nome}</a>
+        <a class="link-rapido" href="${l.url}" target="_blank">${l.nome}</a>
         <button onclick="removerLink(${i})">Excluir</button>
       </div>
     `;
