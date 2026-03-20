@@ -205,6 +205,15 @@ window.salvarCapital = ()=>{
   atualizar();
 };
 
+const entradasEl = document.getElementById("entradas");
+const saidasEl = document.getElementById("saidas");
+const lucroEl = document.getElementById("lucro");
+const salarioEl = document.getElementById("salario");
+const investirEl = document.getElementById("investir");
+const capitalView = document.getElementById("capitalView");
+const lista = document.getElementById("lista");
+const relogio = document.getElementById("relogio");
+  
 function atualizar(){
   let entradas = dados.filter(d=>d.tipo=="entrada").reduce((a,b)=>a+b.valor,0);
   let saidas = dados.filter(d=>d.tipo=="saida").reduce((a,b)=>a+b.valor,0);
