@@ -184,7 +184,7 @@ async function carregar(){
 
 window.salvar = async () => {
   await addDoc(collection(db, userId), {
-    valor: parseFloat(valor.value),
+    valor: parseFloat(valor.value) || 0,
     descricao: descricao.value,
     tipo: tipo.value,
     categoria: categoria.value,
@@ -206,6 +206,23 @@ window.salvar = async () => {
   nomeLink.value = "";
   urlLink.value = "";
 
+  renderLinks();
+};
+ function renderLinks(){
+  links.innerHTML = "";
+
+  linksData.forEach((l, i) => {
+    links.innerHTML += `
+      <div>
+        <a href="${l.url}" target="_blank">${l.nome}</a>
+        <button onclick="removerLink(${i})">Excluir</button>
+      </div>
+    `;
+  });
+}
+
+window.removerLink = (i) => {
+  linksData.splice(i,1);
   renderLinks();
 };
 
